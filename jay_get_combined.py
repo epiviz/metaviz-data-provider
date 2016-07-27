@@ -41,8 +41,7 @@ def post_combined():
     tick_samples = in_samples.replace("\"", "\'")
     # request.data = request.get_json()
     reqId = request.values['id']
-
-    qryStr = "MATCH (f:Feature {depth:'3'})-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) using index f:Feature(depth) using index s:Sample(id) WHERE s.id IN " + tick_samples + " with f, s, SUM(v.val) as agg RETURN agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel"
+    qryStr = "MATCH (f:Feature {depth:'3'})-[:LEAF_OF]->(leaf:Feature)<-[v:VALUE]-(s:Sample) using index f:Feature(depth) using index s:Sample(id) WHERE leaf.start >= + " in_params_start + " AND leaf.end < " + in_params_end + " AND s.id IN " + tick_samples + " with f, s, SUM(v.val) as agg RETURN agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel"
     result = cypher.data(qryStr)
 
     # convert result to dataFrame. update column datatypes
