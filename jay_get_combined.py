@@ -85,6 +85,7 @@ def post_combined():
                 # user selected nodes to ignore!
                 df = df[~df['lineage'].str.contains(key)]
             elif in_params_selection[key] == 2:
+                # since the node is included in the cut (match query) remove all child of node selection
                 df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
     # create a pivot_table where columns are samples and rows are features
