@@ -23,7 +23,7 @@ def add_cors_headers(response):
 
 app.after_request(add_cors_headers)
 
-# Function for performing SQL query to retrieve measurements with filters and pagination
+# handle combined requests
 @app.route('/api', methods=['POST', 'OPTIONS', 'GET'])
 def post_combined():
     if request.method == 'OPTIONS':
@@ -39,19 +39,17 @@ def post_combined():
     in_params_selection = eval(request.values['params[selection]'])
     in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
     in_samples = request.values['params[measurements]']
-
-
-    tick_samples = in_samples.replace("\"", "\'")
-    # request.data = request.get_json()
     reqId = request.values['id']
 
+    tick_samples = in_samples.replace("\"", "\'")
 
-    # get the min selected Level and selected nodes
+    # get the min selected Level if aggregated at multiple levels 
     minSelectedLevel = 100
     for level in in_params_selectedLevels.keys():
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
 
+    # user selection nodes for custom aggregation - decides the cut 
     selNodes = "["
     for node in in_params_selection.keys():
         if in_params_selection[node] == 2:
@@ -62,9 +60,10 @@ def post_combined():
     qryStr = "MATCH (f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth='" + minSelectedLevel + "' OR f.id IN " + selNodes + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
     result = cypher.data(qryStr)
 
-    # convert result to dataFrame. update column datatypes
+    # convert result to dataFrame
     df = pandas.DataFrame(result)
 
+    # change column type
     df['index'] = df['index'].astype(int)
     df['start'] = df['start'].astype(int)
     df['end'] = df['end'].astype(int)
@@ -78,23 +77,26 @@ def post_combined():
         lKey = key.split('-')
         if int(lKey[0]) <= minSelectedLevel:
             if in_params_selection[key] == 0:
-                # remove these nodes from the df
+                # user selected nodes to ignore!
                 df = df[~df['lineage'].str.contains(key)]
             elif in_params_selection[key] == 2:
                 for other in in_params_selection.keys():
                     if key != other:
                         if parent(key, other):
-                            # remove nodes duplication
+                            # if two nodes are aggregated within a subtree.
+                            # choose the parent, remove the child nodes
                             df = df[~df['id'].str.contains(key)]
                             # look for level duplicates
                             df = df[~df['lineage'].str.contains(key)]
                         else:
-                            # if aggregated node is at a higher level, remove child nodes
-                            # remove all nodes that are in the path of key
+                            # if aggregated node is at a higher level than minSelectedLevel
+                            # remove child nodes at the minSelectedLevel
                             df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
     # create a pivot_table where columns are samples and rows are features
     df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end"], cols="s.id", values="agg", fill_value=0).sortlevel("order")
+
+    # convert the pivot matrix into metaviz json format
 
     cols = {}
 
@@ -118,14 +120,13 @@ def post_combined():
     # return res
     return jsonify({"id":reqId, "error": errorStr, "result": resRowsCols})
 
-
+# if child of parent (node id's), return true
 def parent(child, parent):
     qryStr = "MATCH (f:Feature {id:'" + child + "'}) RETURN f.lineage as lineage"
     result = cypher.data(qryStr)
     if parent in result[0]['lineage']:
         # print parent, child, result[0]['lineage']
         return True
-
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5005)
