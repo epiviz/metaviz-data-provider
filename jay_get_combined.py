@@ -85,18 +85,7 @@ def post_combined():
                 # user selected nodes to ignore!
                 df = df[~df['lineage'].str.contains(key)]
             elif in_params_selection[key] == 2:
-                for other in in_params_selection.keys():
-                    if key != other:
-                        if parent(key, other):
-                            # if two nodes are aggregated within a subtree.
-                            # choose the parent, remove the child nodes
-                            df = df[~df['id'].str.contains(key)]
-                            # look for level duplicates
-                            df = df[~df['lineage'].str.contains(key)]
-                        else:
-                            # if aggregated node is at a higher level than minSelectedLevel
-                            # remove child nodes at the minSelectedLevel
-                            df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
+                df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
     # create a pivot_table where columns are samples and rows are features
     df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"], cols="s.id", values="agg", fill_value=0).sortlevel("index")
