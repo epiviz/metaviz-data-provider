@@ -36,12 +36,30 @@ def post_combined():
     in_params_start = request.values['params[start]']
     in_params_method = request.values['method']
     in_params_order = eval(request.values['params[order]'])
+    in_params_selection = eval(request.values['params[selection]'])
+    in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
     in_samples = request.values['params[measurements]']
+
 
     tick_samples = in_samples.replace("\"", "\'")
     # request.data = request.get_json()
     reqId = request.values['id']
-    qryStr = "MATCH (f:Feature {depth:'3'})-[:LEAF_OF]->(leaf:Feature)<-[v:VALUE]-(s:Sample) using index f:Feature(depth) using index s:Sample(id) WHERE leaf.start >= + " in_params_start + " AND leaf.end < " + in_params_end + " AND s.id IN " + tick_samples + " with f, s, SUM(v.val) as agg RETURN agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel"
+
+
+    # get the min selected Level and selected nodes
+    minSelectedLevel = 100
+    for level in in_params_selectedLevels.keys():
+        if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
+            minSelectedLevel = int(level)
+
+    selNodes = "["
+    for node in in_params_selection.keys():
+        if in_params_selection[node] == 2:
+            selNodes += node
+
+    selNodes += "]"
+
+    qryStr = "MATCH (f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth='" + minSelectedLevel + "' OR f.id IN " + selNodes + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel"
     result = cypher.data(qryStr)
 
     # convert result to dataFrame. update column datatypes
@@ -54,6 +72,25 @@ def post_combined():
     # update order based on req
     for key in in_params_order.keys():
         df.loc[df['id'] == key, 'index'] = in_params_order[key]
+
+    for key in in_params_selection.keys():
+        lKey = key.split('-')
+        if int(lKey[0]) <= minSelectedLevel:
+            if in_params_selection[key] == 0:
+                # remove these nodes from the df
+                df = df[~df['lineage'].str.contains(key)]
+            elif in_params_selection[key] == 2:
+                for other in in_params_selection.keys():
+                    if key != other:
+                        if parent(key, other):
+                            # remove nodes duplication
+                            df = df[~df['id'].str.contains(key)]
+                            # look for level duplicates
+                            df = df[~df['lineage'].str.contains(key)]
+                        else:
+                            # if aggregated node is at a higher level, remove child nodes
+                            # remove all nodes that are in the path of key
+                            df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
     # create a pivot_table where columns are samples and rows are features
     df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end"], cols="s.id", values="agg", fill_value=0).sortlevel("index")
@@ -79,6 +116,15 @@ def post_combined():
     # res = ujson.dumps({"id":reqId, "error": errorStr, "result": resRowsCols})
     # return res
     return jsonify({"id":reqId, "error": errorStr, "result": resRowsCols})
+
+
+def parent(child, parent):
+    qryStr = "MATCH (f:Feature {id:'" + child + "'}) RETURN f.lineage as lineage"
+    result = cypher.data(qryStr)
+    if parent in result[0]['lineage']:
+        # print parent, child, result[0]['lineage']
+        return True
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5005)
