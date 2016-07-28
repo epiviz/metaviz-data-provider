@@ -57,7 +57,7 @@ def post_combined():
 
     selNodes += "]"
 
-    qryStr = "MATCH (f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth='" + minSelectedLevel + "' OR f.id IN " + selNodes + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
+    qryStr = "MATCH (f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth='" + str(minSelectedLevel) + "' OR f.id IN " + selNodes + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
     result = cypher.data(qryStr)
 
     # convert result to dataFrame
@@ -94,7 +94,7 @@ def post_combined():
                             df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
     # create a pivot_table where columns are samples and rows are features
-    df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end"], cols="s.id", values="agg", fill_value=0).sortlevel("order")
+    df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"], cols="s.id", values="agg", fill_value=0).sortlevel("order")
 
     # convert the pivot matrix into metaviz json format
 
