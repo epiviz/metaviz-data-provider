@@ -51,9 +51,14 @@ def post_combined():
 
     # user selection nodes for custom aggregation - decides the cut 
     selNodes = "["
+    selFlag = 0
     for node in in_params_selection.keys():
         if in_params_selection[node] == 2:
-            selNodes += node
+            selNodes += "'" + node + "'"
+            selFlag = 1
+
+    if selFlag ==1:
+        selNodes = selNodes[:-1]
 
     selNodes += "]"
 
@@ -94,7 +99,7 @@ def post_combined():
                             df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
     # create a pivot_table where columns are samples and rows are features
-    df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"], cols="s.id", values="agg", fill_value=0).sortlevel("order")
+    df_pivot = pandas.pivot_table(df,rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"], cols="s.id", values="agg", fill_value=0).sortlevel("index")
 
     # convert the pivot matrix into metaviz json format
 
