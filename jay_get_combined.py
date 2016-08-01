@@ -64,7 +64,7 @@ def post_combined():
 
     qryStr = "MATCH (f:Feature)-[:LEAF_OF]->(leaf:Feature)<-[v:VALUE]-(s:Sample) USING INDEX s:Sample(id) WHERE (f.depth='" + str(
         minSelectedLevel) + "' OR f.id IN " + selNodes + ") AND (leaf.start >= '" + in_params_start + "' AND leaf.end < '" + in_params_end + "') AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
-    print(qryStr)
+    # print(qryStr)
     # result = cypher.data(qryStr)
 
     headers = {'Content-Type': 'application/json'}
@@ -74,7 +74,7 @@ def post_combined():
                       auth=(credential.neo4j_username, credential.neo4j_password))
     rows = []
 
-    print(rq_res.text)
+    # print(rq_res.text)
 
     jsResp = ujson.loads(rq_res.text)
 
