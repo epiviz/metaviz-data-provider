@@ -212,79 +212,88 @@ def post_combined():
         leaves = []
         paths = []
         for line in result:
-            #print(line)
-            #print(line.keys())
             roots.append(line['root'])
             leaves.append(line['leaf'][0])
             paths.append(line['path'])
 
-        print(roots)
-        print(leaves)
-        print(paths)
-
         result = {}
         result['id'] = in_params_nodeId
-        depth_1_children = []
+        depth_1_children = {}
+        depth_1_children_ret = []
         depth_1_children_index = {}
         depth_2_children = {}
         depth_2_children_index = {}
-        depth_2_list_index = {}
-        depth_3_children = []
         depth_3_children_index = {}
         for j in range(0, len(paths)):
-            if paths[j][1]['id'] not in depth_1_children_index:
-                depth_1_children.append(returnChildren(paths[j][1]))
-                depth_1_children_index[(paths[j][1]['id'])] = len(depth_1_children)-1
+            if paths[j][1]['id'] not in depth_1_children.keys():
+                depth_1_children[(paths[j][1]['id'])] = [returnChildren(paths[j][1])]
+                depth_1_children_ret.append(returnChildren(paths[j][1]))
+                depth_1_children_index[paths[j][1]['id']] = len(depth_1_children_ret)-1
+            else:
+                depth_1_children[(paths[j][1]['id'])].append(returnChildren(paths[j][1]))
 
         print(depth_1_children)
         print(depth_1_children_index)
 
         for j in range(0, len(paths)):
-            depth_1_parent_index = depth_1_children_index[paths[j][2]['parentId']]
-            if depth_1_children[depth_1_parent_index]['children'] is not None:
-                to_iter = depth_1_children[depth_1_parent_index]['children']
+            parent_id = paths[j][2]['parentId']
+            if depth_1_children[parent_id][0]['children'] is not None:
+                to_iter = depth_1_children[parent_id][0]['children']
                 in_iter = False
                 for l in range(0, len (to_iter)):
-                  print(to_iter[l])
-                  if  paths[j][2]['id'] in to_iter[l].values():
-                    in_iter = True
-                    break
-                  if not in_iter:
-                    depth_1_children[depth_1_parent_index]['children'].append(returnChildren(paths[j][2]))
+                    print(to_iter[l])
+                    if  paths[j][2]['id'] in to_iter[l].values():
+                        in_iter = True
+                        break
+                if not in_iter:
+                    depth_1_children[parent_id][0]['children'].append(returnChildren(paths[j][2]))
+                    depth_1_children_ret[depth_1_children_index[parent_id]]['children'].append(returnChildren(paths[j][2]))
+                    depth_2_children[paths[j][2]['id']] = len(depth_1_children_ret[depth_1_children_index[parent_id]]['children'])-1
             else:
-                depth_1_children[depth_1_parent_index]['children'] = [returnChildren(paths[j][2])]
-            depth_2_list_index[paths[j][2]['id']] = len(depth_1_children[depth_1_parent_index]['children'])-1
+                depth_1_children[parent_id][0]['children'] = [returnChildren(paths[j][2])]
+                depth_1_children_ret[depth_1_children_index[parent_id]]['children'] = [returnChildren(paths[j][2])]
+                depth_2_children[paths[j][2]['id']] = 0
             if paths[j][2]['id'] in depth_2_children_index:
                 continue
             else:
-                depth_2_children_index[paths[j][2]['id']] = depth_1_parent_index
+                depth_2_children_index[paths[j][2]['id']] = parent_id
 
 
-        print(depth_1_children)
-        print(depth_2_children_index)
+        print(depth_2_children)
 
         for j in range(0, len(paths)):
-            depth_1_parent_index = depth_2_children_index[paths[j][3]['parentId']]
-            depth_2_child_list = depth_1_children[depth_1_parent_index]['children']
-            if  depth_1_children[depth_1_parent_index]['children'][depth_2_list_index[paths[j][3]['parentId']]]['children'] is not None:
-                to_iter = depth_1_children[depth_1_parent_index]['children'][depth_2_list_index[paths[j][3]['parentId']]]['children']
+            parent_id = paths[j][3]['parentId']
+            depth_1_parent_id = depth_2_children_index[parent_id]
+            to_find_index = depth_1_children[depth_1_parent_id][0]['children']
+            for z in range(0, len(to_find_index)):
+                if parent_id == to_find_index[z]['id']:
+                    break
+            depth_2_child_list = depth_1_children[depth_1_parent_id][0]['children'][z]['children']
+            if  depth_2_child_list is not None:
+                to_iter = depth_2_child_list
                 in_iter = False
+                print(to_iter)
                 for l in range(0, len (to_iter)):
                     print(to_iter[l])
                     if  paths[j][3]['id'] in to_iter[l].values():
                         in_iter = True
                         break
                 if not in_iter:
-                    depth_1_children[depth_1_parent_index]['children'][depth_2_list_index[paths[j][3]['parentId']]]['children'].append(returnChildren(paths[j][3]))
+                    if parent_id in depth_2_children.keys():
+                        print(depth_2_children.keys())
+                    depth_1_children[depth_1_parent_id][0]['children'][z]['children'].append(returnChildren(paths[j][3]))
+                    child_index = depth_2_children[parent_id]
+                    depth_1_children_ret[depth_1_children_index[parent_id]]['children'][child_index]['children'].append(returnChildren(paths[j][3]))
+                    print("appened child for " + paths[j][3]['parentId'])
             else:
-                depth_1_children[depth_1_parent_index]['children'][depth_2_list_index[paths[j][3]['parentId']]]['children'] = [returnChildren(paths[j][3])]
-            if paths[j][3]['id'] in depth_3_children_index:
-                continue
-            else:
-                depth_3_children_index[paths[j][3]['id']] = depth_1_parent_index
+                if parent_id in depth_2_children.keys():
+                    print(depth_2_children.keys())
+                depth_1_children[depth_1_parent_id][0]['children'][z]['children'] = [returnChildren(paths[j][3])]
+                child_index = depth_2_children[parent_id]
+                depth_1_children_ret[depth_1_children_index[parent_id]]['children'][child_index]['children'] = [returnChildren(paths[j][3])]
+                print("added child for " + paths[j][3]['parentId'])
 
         print(depth_1_children)
-        print(depth_3_children_index)
 
         result['lineage'] = roots[0]['lineage']
         result['end'] = roots[0]['end']
@@ -305,14 +314,14 @@ def post_combined():
         result['size'] = 1
         result['taxonomy'] = 'taxonomy' + (str(int(result['depth'])+1))
 
-        result['children'] = depth_1_children
+        result['children'] = depth_1_children_ret
 
         errorStr = ""
         pageSize = str(10)
-        #resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
+    #resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
         res = jsonify({"id": request.values['id'], "error": errorStr, "result": result})
-        #pprint.pprint(jsonify({"id": request.values['id'], "error": errorStr, "result": result}))
-        #return res
+    #pprint.pprint(jsonify({"id": request.values['id'], "error": errorStr, "result": result}))
+    #return res
 
     elif in_params_method == 'measurements':
         graph = Graph(password=credential.neo4j_password)
@@ -387,4 +396,4 @@ def post_combined():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0", port=5006)
