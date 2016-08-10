@@ -84,9 +84,9 @@ def process_api():
 
         if nonRoot:
             qryStr = "MATCH p=(fParent:Feature)-[:PARENT_OF]->(f:Feature {id:'" + in_params_nodeId.replace("\"",
-                                                                                                           "") + "'})-[*]->(f2:Feature {depth: '" + depth + "'}) RETURN f AS root, COLLECT(f2) AS leaf, nodes(p) AS path, fParent"
+                                                                                                           "") + "'})-[*]->(f2:Feature {depth: " + depth + "}) RETURN f AS root, COLLECT(f2) AS leaf, nodes(p) AS path, fParent"
         else:
-            qryStr = "MATCH p=(f:Feature {id:'" + in_params_nodeId + "'})-[*]->(f2:Feature {depth: '" + depth + "'}) RETURN f AS root, COLLECT(f2) AS leaf, nodes(p) AS path"
+            qryStr = "MATCH p=(f:Feature {id:'" + in_params_nodeId + "'})-[*]->(f2:Feature {depth: " + depth + "}) RETURN f AS root, COLLECT(f2) AS leaf, nodes(p) AS path"
 
         vals = ['lineage', 'start', 'label', 'leafIndex', 'parentId', 'depth', 'partition', 'end', 'id', 'lineageLabel',
                 'nchildren', 'nleaves', 'order']
@@ -101,14 +101,20 @@ def process_api():
         result = cypher_call(qryStr)
         jsResp = ujson.loads(result.text)
 
+        print(qryStr)
+        print(result)
+        print(jsResp)
+
         for row in jsResp["results"][0]["data"]:
-            # print(row['row'])
+            print(row['row'])
             if counter == 0 and nonRoot:
                 parent.append(row['row'][3])
                 counter = counter + 1
             roots.append(row['row'][0])
             leaves.append(row['row'][1])
             paths.append(row['row'][2])
+
+        print(roots)
 
         tree = []
 
@@ -297,12 +303,14 @@ def process_api():
         rq_res = cypher_call(qryStr)
         df = process_result(rq_res)
 
+        print(df)
+
         arr = []
-        arr.append([None, df[0]['start'], df[0]['end']])
+        arr.append([None, df['start'][0], df['end'][0]])
 
         errorStr = None
         # res = jsonify({"id": request.values['id'], "error": errorStr, "result": [arr]})
-        res = Response(response=ujson.dumps({"id": request.values['id'], "error": errorStr, "result": [arr]}),
+        res = Response(response=ujson.dumps({"id": request.values['id'], "error": errorStr, "result": arr}),
                        status=200,
                        mimetype="application/json")
     elif in_params_method == "measurements":
@@ -316,7 +324,9 @@ def process_api():
         rq_res = cypher_call(qryStr)
         df = process_result(rq_res)
 
-        measurements = df['id'].values.to_list()
+        print(df)
+
+        measurements = df['id'].values
 
         errorStr = ""
         result = {"id": measurements, "name": measurements, "datasourceGroup": "ihmp", "datasourceId": "ihmp",
