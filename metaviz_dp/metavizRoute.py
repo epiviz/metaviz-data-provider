@@ -28,13 +28,13 @@ def process_api():
     in_params_method = request.values['method']
 
     if(in_params_method == "hierarchy"):
-        in_params_order = request.values['params[order]']
-        in_params_selection = request.values['params[selection]']
-        in_params_selected_levels = request.values['params[selectedLevels]']
+        in_params_order = eval(request.values['params[order]'])
+        in_params_selection = eval(request.values['params[selection]'])
+        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_nodeId = request.values['params[nodeId]']
         in_params_depth = request.values['params[depth]']
 
-        result = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selected_levels, in_params_nodeId, in_params_depth)
+        result = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels, in_params_nodeId, in_params_depth)
         errorStr = None
         # res = jsonify({"id": request.values['id'], "error": errorStr, "result": result})
     elif in_params_method == "partitions":
