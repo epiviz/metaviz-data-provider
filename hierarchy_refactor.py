@@ -14,7 +14,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                                                         "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
                                                         "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.nleaves as nleaves, " \
                                                         "ff.order as order " \
-                                                        "order by ff.leafIndex, ff.order"
+                                                        "order by ff.depth, ff.leafIndex, ff.order"
 
     else:
         qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) " \
@@ -23,7 +23,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                                                         "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
                                                         "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.nleaves as nleaves, " \
                                                         "ff.order as order " \
-                                                        "order by ff.leafIndex, ff.order"
+                                                        "order by ff.depth, ff.leafIndex, ff.order"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
@@ -46,15 +46,16 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
         for key in in_params_selection.keys():
             df.loc[df['id'] == key, 'selectionType'] = in_params_selection[key]
 
-        # for key in in_params_selected_levels.keys():
-        #     df.loc[df['depth'] == int(key), 'selectionType'] = in_params_selected_levels[key]
+        for key in in_params_selected_levels.keys():
+            df.loc[df['depth'] == int(key), 'selectionType'] = in_params_selected_levels[key]
 
-        # first row is always the root of the entire subtree!
         root = df.iloc[0]
         other = df.loc[1:,]
 
         rootDict = row_to_dict(root)
         result = df_to_tree(rootDict, other)
+
+        return result
 
 def row_to_dict(row):
     toRet = {}
@@ -81,11 +82,12 @@ def row_to_dict(row):
 
 def df_to_tree(root, df):
 
-    if len(df) == 0:
-        root['children'] = None
-        return
-
     children = df[df['parentId'] == root['id']]
+
+    if len(children) == 0:
+        root['children'] = None
+        return root
+
     otherChildren = df[~(df['parentId'] == root['id'])]
     children.sort_values('order')
     # root['size'] = len(children)
@@ -93,6 +95,9 @@ def df_to_tree(root, df):
     for index,row in children.iterrows():
         childDict = row_to_dict(row)
         subDict = df_to_tree(childDict, otherChildren)
-        root['children'].append(subDict)
+        if subDict is None:
+            root['children'] = None
+        else:
+            root['children'].append(subDict)
 
     return root
