@@ -17,6 +17,7 @@ def add_cors_headers(response):
 
 app.after_request(add_cors_headers)
 
+@app.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
 @app.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
 def process_api():
     if request.method == 'OPTIONS':
@@ -49,9 +50,9 @@ def process_api():
         in_params_order = eval(request.values['params[order]'])
         in_params_selection = eval(request.values['params[selection]'])
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
-        in_samples = request.values['params[measurements]']
+        in_params_samples = request.values['params[measurements]']
 
-        result = CombinedRequest.getData(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels, in_samples)
+        result = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels, in_params_samples)
         errorStr = None
 
     reqId = request.values['id']
