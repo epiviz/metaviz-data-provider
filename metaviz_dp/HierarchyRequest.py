@@ -14,7 +14,6 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                                                         "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.nleaves as nleaves, " \
                                                         "ff.order as order " \
                                                         "order by ff.depth, ff.leafIndex, ff.order"
-
     else:
         qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) " \
                                                         "with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
@@ -88,7 +87,9 @@ def df_to_tree(root, df):
         return root
 
     otherChildren = df[~(df['parentId'] == root['id'])]
-    children.sort_values('order')
+    # children.sort_values('order')
+    # for old version of pandas
+    children.sort('order')
     # root['size'] = len(children)
 
     for index,row in children.iterrows():

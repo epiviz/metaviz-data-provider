@@ -59,12 +59,12 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
 
         # create a pivot_table where columns are samples and rows are features
 
-        # df_pivot = pandas.pivot_table(df, rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
-        #                               cols="s.id", values="agg", fill_value=0).sortlevel("index")
+        df_pivot = pandas.pivot_table(df, rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
+                                      cols="s.id", values="agg", fill_value=0).sortlevel("index")
 
         # for pandas > 0.17
-        df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
-                                      columns="s.id", values="agg", fill_value=0).sortlevel("index")
+        # df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
+        #                               columns="s.id", values="agg", fill_value=0).sortlevel("index")
 
         cols = {}
 
