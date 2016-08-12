@@ -1,8 +1,6 @@
-from flask import Flask, jsonify, request, Response, make_response, current_app
+from flask import Flask, jsonify, request, Response
 import ujson
 import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, utils
-from datetime import timedelta
-from functools import update_wrapper
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
