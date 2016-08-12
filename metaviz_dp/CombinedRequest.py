@@ -38,50 +38,63 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
 
-    # change column type
-    df['index'] = df['index'].astype(int)
-    df['start'] = df['start'].astype(int)
-    df['end'] = df['end'].astype(int)
-    df['order'] = df['order'].astype(int)
+    if len(df) > 0:
+        # change column type
+        df['index'] = df['index'].astype(int)
+        df['start'] = df['start'].astype(int)
+        df['end'] = df['end'].astype(int)
+        df['order'] = df['order'].astype(int)
 
-    # update order based on req
-    for key in in_params_order.keys():
-        df.loc[df['id'] == key, 'order'] = in_params_order[key]
+        # update order based on req
+        for key in in_params_order.keys():
+            df.loc[df['id'] == key, 'order'] = in_params_order[key]
 
-    for key in in_params_selection.keys():
-        lKey = key.split('-')
-        if int(lKey[0]) <= minSelectedLevel:
-            if in_params_selection[key] == 0:
-                # user selected nodes to ignore!
-                df = df[~df['lineage'].str.contains(key)]
-            elif in_params_selection[key] == 2:
-                df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
+        for key in in_params_selection.keys():
+            lKey = key.split('-')
+            if int(lKey[0]) <= minSelectedLevel:
+                if in_params_selection[key] == 0:
+                    # user selected nodes to ignore!
+                    df = df[~df['lineage'].str.contains(key)]
+                elif in_params_selection[key] == 2:
+                    df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
-    # create a pivot_table where columns are samples and rows are features
+        # create a pivot_table where columns are samples and rows are features
 
-    # df_pivot = pandas.pivot_table(df, rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
-    #                               cols="s.id", values="agg", fill_value=0).sortlevel("index")
+        # df_pivot = pandas.pivot_table(df, rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
+        #                               cols="s.id", values="agg", fill_value=0).sortlevel("index")
 
-    # for pandas > 0.17
-    df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
-                                  columns="s.id", values="agg", fill_value=0).sortlevel("index")
+        # for pandas > 0.17
+        df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
+                                      columns="s.id", values="agg", fill_value=0).sortlevel("index")
 
-    cols = {}
+        cols = {}
 
-    for col in df_pivot:
-        cols[col] = df_pivot[col].values.tolist()
+        for col in df_pivot:
+            cols[col] = df_pivot[col].values.tolist()
 
-    rows = {}
-    rows['metadata'] = {}
+        rows = {}
+        rows['metadata'] = {}
 
-    metadata_row = ["end", "start", "index"]
+        metadata_row = ["end", "start", "index"]
 
-    for row in df_pivot.index.names:
-        if row in metadata_row:
-            rows[row] = df_pivot.index.get_level_values(row).values.tolist()
-        else:
-            rows['metadata'][row] = df_pivot.index.get_level_values(row).values.tolist()
+        for row in df_pivot.index.names:
+            if row in metadata_row:
+                rows[row] = df_pivot.index.get_level_values(row).values.tolist()
+            else:
+                rows['metadata'][row] = df_pivot.index.get_level_values(row).values.tolist()
 
-    errorStr = ""
-    resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
+        errorStr = ""
+        resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
+
+    else:
+        cols = {}
+
+        samples = eval(in_params_samples)
+
+        for sa in samples:
+            cols[sa] = []
+
+        rows = { "end": [], "start": [], "index": [], "metadata": {} }
+        resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": None}
+
     return resRowsCols
