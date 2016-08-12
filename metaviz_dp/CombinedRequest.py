@@ -1,7 +1,6 @@
 import utils
 import pandas
 
-
 def get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels, in_params_samples):
 
     #default aggregation

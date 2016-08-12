@@ -1,6 +1,4 @@
 import utils
-import pandas
-
 
 def get_data():
     measurements = []

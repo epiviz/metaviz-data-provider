@@ -1,6 +1,4 @@
 import utils
-import ujson
-import pandas
 
 def get_data():
     qryStr = "MATCH (f:Feature {id:'0-0'}) RETURN  f.start as start, f.end as end"
