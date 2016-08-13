@@ -12,7 +12,26 @@ def process_result(result):
     for row in jsResp["results"][0]["data"]:
         rows.append(row['row'])
 
-    df = pandas.DataFrame(rows, columns=jsResp['results'][0]['columns'])
+    df = pandas.DataFrame()
+
+    if len(rows) > 0:
+        df = pandas.DataFrame(rows, columns=jsResp['results'][0]['columns'])
+
+    return df
+
+def process_result_graph(result):
+    rows = []
+
+    jsResp = ujson.loads(result.text)
+
+    for row in jsResp["results"][0]["data"]:
+        rows.append(row['row'][0])
+
+    df = pandas.DataFrame()
+
+    if len(rows) > 0:
+        df = pandas.DataFrame(rows)
+
     return df
 
 # make cypher qyery calls.
