@@ -5,6 +5,8 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     root_node = in_params_nodeId
     root_node = root_node.replace('"', "")
 
+    taxonomy = False
+
     if len(root_node) == 0 or root_node == "0-0":
         root_node = "0-0"
         qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
@@ -14,6 +16,9 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                                                         "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.nleaves as nleaves, " \
                                                         "ff.order as order " \
                                                         "order by ff.depth, ff.leafIndex, ff.order"
+
+        tQryStr = "MATCH (f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
+        taxonomy = True
     else:
         qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) " \
                                                         "with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
@@ -52,6 +57,12 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
 
         rootDict = row_to_dict(root)
         result = df_to_tree(rootDict, other)
+
+        if taxonomy:
+            trq_res = utils.cypher_call(tQryStr)
+            tdf = utils.process_result(trq_res)
+
+            result.taxonomy = tdf['taxonomy'].values.to_list()
 
         return result
 
