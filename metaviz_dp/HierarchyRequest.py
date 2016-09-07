@@ -62,7 +62,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             trq_res = utils.cypher_call(tQryStr)
             tdf = utils.process_result(trq_res)
 
-            result.taxonomy = tdf['taxonomy'].values.to_list()
+            result.taxonomy = tdf['rootTaxonomies'].values.to_list()
 
         return result
 
