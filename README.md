@@ -7,4 +7,4 @@ This project expects a running NEO4j instance on the machine.  Neo4j requires a 
 # Neo4j installation - 
 
 * if neo4j is not running on the default port, update the `url` in `utils.py`
-* Update `utls.py` with the username and password for the neo4j instance
+* Update `utils.py` with the username and password for the neo4j instance
