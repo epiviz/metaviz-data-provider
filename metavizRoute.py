@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Response
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, utils
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
@@ -44,6 +44,22 @@ def process_api():
     elif in_params_method == "measurements":
         errorStr = None
         result = MeasurementsRequest.get_data()
+    elif in_params_method == "pca":
+        errorStr = None
+        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
+        in_params_samples = request.values['params[measurements]']
+        result = PCARequest.get_data(in_params_selectedLevels, in_params_samples)
+
+        errorStr = None
+
+    elif in_params_method == "diversity":
+        errorStr = None
+        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
+        in_params_samples = request.values['params[measurements]']
+
+        result = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples)
+
+        errorStr = None
     elif in_params_method == "combined":
         in_params_end = request.values['params[end]']
         in_params_start = request.values['params[start]']
@@ -62,6 +78,6 @@ def process_api():
 
 if __name__ == '__main__':
     if(utils.check_neo4j()):
-        app.run(debug=True, host="0.0.0.0", port=5006)
+        app.run(debug=True, host="0.0.0.0")
     else:
         print("Neo4j is not running")
