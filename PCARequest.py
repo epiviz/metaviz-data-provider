@@ -37,13 +37,36 @@ def get_data(in_params_selectedLevels, in_params_samples):
 
     vals = []
 
-    for col in forPCAmat:
-        row = {}
-        row['pca1'] = cols['pca1'][count]
-        row['pca2'] = cols['pca2'][count]
-        row['sample_id'] = col
-        vals.append(row)
-        count = count+1
+    qryStr2 = "MATCH (s:Sample) WHERE s.id IN " + tick_samples + " RETURN s"
+
+    rq_res2 = utils.cypher_call(qryStr2)
+    df2 = utils.process_result_graph(rq_res2)
+    print(df2)
+    vals = []
+
+    for index, row in df2.iterrows():
+        temp = {}
+        print(index)
+        print(row)
+        print(row.keys())
+        print(row.keys().values)
+        for key in row.keys().values:
+            temp[key] = row[key]
+        temp['pca1'] = cols['pca1'][index]
+        temp['pca2'] = cols['pca2'][index]
+        print(temp)
+        temp['sample_id'] = temp['id']
+        del temp['id']
+        vals.append(temp)
+
+
+    # for col in forPCAmat:
+    #     row = {}
+    #     row['pca1'] = cols['pca1'][count]
+    #     row['pca2'] = cols['pca2'][count]
+    #     row['sample_id'] = col
+    #     vals.append(row)
+    #     count = count+1
 
     print(vals)
 
