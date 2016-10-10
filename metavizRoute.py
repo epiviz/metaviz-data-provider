@@ -31,7 +31,7 @@ def process_api():
         return res
 
     in_params_method = request.values['method']
-    print request.values
+
     if(in_params_method == "hierarchy"):
         param_dict = create_request_param_dict(order=eval(request.values['params[order]']),
                                                selection=eval(request.values['params[selection]']),

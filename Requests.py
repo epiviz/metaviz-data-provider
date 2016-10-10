@@ -17,54 +17,6 @@ def create_request_param_dict(order=None, selection=None, selected_levels=None, 
     return param_dict
 
 
-def row_to_dict(row):
-    toRet = {}
-    # toRet['lineage'] = row['lineage']
-    toRet['end'] = row['end']
-    toRet['partition'] = None
-    toRet['leafIndex'] = row['leafIndex']
-    toRet['nchildren'] = row['nchildren']
-    toRet['label'] = row['label']
-    toRet['name'] = row['label']
-    toRet['start'] = row['start']
-    toRet['depth'] = row['depth']
-    toRet['globalDepth'] = row['depth']
-    # toRet['lineageLabel'] = row['lineageLabel']
-    toRet['nleaves'] = row['nleaves']
-    toRet['parentId'] = row['parentId']
-    toRet['order'] = row['order']
-    toRet['id'] = row['id']
-    toRet['selectionType'] = 1
-    toRet['taxonomy'] = 'taxonomy' + (str(int(toRet['depth']) + 1))
-    toRet['size'] = 1
-    toRet['children'] = []
-    return toRet
-
-def df_to_tree(root, df):
-
-    children = df[df['parentId'] == root['id']]
-
-    if len(children) == 0:
-        root['children'] = None
-        return root
-
-    otherChildren = df[~(df['parentId'] == root['id'])]
-    # children.sort_values('order')
-    # for old version of pandas
-    children.sort('order')
-    # root['size'] = len(children)
-
-    for index,row in children.iterrows():
-        childDict = row_to_dict(row)
-        subDict = df_to_tree(childDict, otherChildren)
-        if subDict is None:
-            root['children'] = None
-        else:
-            root['children'].append(subDict)
-
-    return root
-
-
 class Request(object):
 
     def __init__(self, params):
@@ -328,8 +280,8 @@ class HierarchyRequest(Request):
             root = df.iloc[0]
             other = df.loc[1:,]
 
-            rootDict = row_to_dict(root)
-            result = df_to_tree(rootDict, other)
+            rootDict = HierarchyRequest.row_to_dict(root)
+            result = HierarchyRequest.df_to_tree(rootDict, other)
 
             if taxonomy:
                 trq_res = utils.cypher_call(tQryStr)
@@ -338,6 +290,55 @@ class HierarchyRequest(Request):
                 result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
             return result
+
+    @staticmethod
+    def row_to_dict(row):
+        toRet = {}
+        # toRet['lineage'] = row['lineage']
+        toRet['end'] = row['end']
+        toRet['partition'] = None
+        toRet['leafIndex'] = row['leafIndex']
+        toRet['nchildren'] = row['nchildren']
+        toRet['label'] = row['label']
+        toRet['name'] = row['label']
+        toRet['start'] = row['start']
+        toRet['depth'] = row['depth']
+        toRet['globalDepth'] = row['depth']
+        # toRet['lineageLabel'] = row['lineageLabel']
+        toRet['nleaves'] = row['nleaves']
+        toRet['parentId'] = row['parentId']
+        toRet['order'] = row['order']
+        toRet['id'] = row['id']
+        toRet['selectionType'] = 1
+        toRet['taxonomy'] = 'taxonomy' + (str(int(toRet['depth']) + 1))
+        toRet['size'] = 1
+        toRet['children'] = []
+        return toRet
+
+    @staticmethod
+    def df_to_tree(root, df):
+
+        children = df[df['parentId'] == root['id']]
+
+        if len(children) == 0:
+            root['children'] = None
+            return root
+
+        otherChildren = df[~(df['parentId'] == root['id'])]
+        # children.sort_values('order')
+        # for old version of pandas
+        children.sort('order')
+        # root['size'] = len(children)
+
+        for index,row in children.iterrows():
+            childDict = HierarchyRequest.row_to_dict(row)
+            subDict = HierarchyRequest.df_to_tree(childDict, otherChildren)
+            if subDict is None:
+                root['children'] = None
+            else:
+                root['children'].append(subDict)
+
+        return root
 
 
 class DiversityRequest(Request):
