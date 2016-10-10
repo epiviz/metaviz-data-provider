@@ -1,9 +1,12 @@
-from flask import Flask, jsonify, request, Response
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils
+import utils
+from flask import Flask, jsonify, request, Response
+from Requests import create_request_param_dict, CombinedRequest, MeasurementsRequest, HierarchyRequest, PartitionsRequest, PCARequest, DiversityRequest
+
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
 
 # Function to handle access control allow headers
 def add_cors_headers(response):
@@ -17,6 +20,7 @@ def add_cors_headers(response):
 
 app.after_request(add_cors_headers)
 
+
 @app.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
 @app.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
 def process_api():
@@ -27,48 +31,46 @@ def process_api():
         return res
 
     in_params_method = request.values['method']
-
+    print request.values
     if(in_params_method == "hierarchy"):
-        in_params_order = eval(request.values['params[order]'])
-        in_params_selection = eval(request.values['params[selection]'])
-        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
-        in_params_nodeId = request.values['params[nodeId]']
-        in_params_depth = request.values['params[depth]']
-
-        result = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels, in_params_nodeId, in_params_depth)
+        param_dict = create_request_param_dict(order=eval(request.values['params[order]']),
+                                               selection=eval(request.values['params[selection]']),
+                                               selected_levels=eval(request.values['params[selectedLevels]']),
+                                               node_id=request.values['params[nodeId]'],
+                                               depth=request.values['params[depth]'])
+        result = HierarchyRequest(param_dict).get_data()
         errorStr = None
         # res = jsonify({"id": request.values['id'], "error": errorStr, "result": result})
-    elif in_params_method == "partitions":
-        result = PartitionsRequest.get_data()
-        errorStr = None
-    elif in_params_method == "measurements":
-        errorStr = None
-        result = MeasurementsRequest.get_data()
-    elif in_params_method == "pca":
-        errorStr = None
-        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
-        in_params_samples = request.values['params[measurements]']
-        result = PCARequest.get_data(in_params_selectedLevels, in_params_samples)
 
+    elif in_params_method == "partitions":
+        result = PartitionsRequest(create_request_param_dict()).get_data()
+        errorStr = None
+
+    elif in_params_method == "measurements":
+        result = MeasurementsRequest(create_request_param_dict()).get_data()
+        errorStr = None
+
+    elif in_params_method == "pca":
+        param_dict = create_request_param_dict(selected_levels=eval(request.values['params[selectedLevels]']),
+                                               samples=request.values['params[measurements]'])
+        result = PCARequest(param_dict).get_data()
         errorStr = None
 
     elif in_params_method == "diversity":
+        param_dict = create_request_param_dict(selected_levels=eval(request.values['params[selectedLevels]']),
+                                               samples=request.values['params[measurements]'])
+        result = DiversityRequest(param_dict).get_data()
         errorStr = None
-        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
-        in_params_samples = request.values['params[measurements]']
 
-        result = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples)
-
-        errorStr = None
     elif in_params_method == "combined":
-        in_params_end = request.values['params[end]']
-        in_params_start = request.values['params[start]']
-        in_params_order = eval(request.values['params[order]'])
-        in_params_selection = eval(request.values['params[selection]'])
-        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
-        in_params_samples = request.values['params[measurements]']
 
-        result = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels, in_params_samples)
+        param_dict = create_request_param_dict(end=request.values['params[end]'],
+                                               start=request.values['params[start]'],
+                                               order=eval(request.values['params[order]']),
+                                               selection=eval(request.values['params[selection]']),
+                                               selected_levels=eval(request.values['params[selectedLevels]']),
+                                               samples=request.values['params[measurements]'])
+        result = CombinedRequest(param_dict).get_data()
         errorStr = None
 
     reqId = request.values['id']
@@ -76,8 +78,9 @@ def process_api():
                    mimetype="application/json")
     return res
 
+
 if __name__ == '__main__':
-    if(utils.check_neo4j()):
+    if utils.check_neo4j():
         app.run(debug=True, host="0.0.0.0")
     else:
         print("Neo4j is not running")
