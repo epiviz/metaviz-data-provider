@@ -22,7 +22,7 @@ def get_data():
     df2 = utils.process_result(rq_res2)
 
     errorStr = ""
-    result = {"id": measurements, "name": measurements, "datasourceGroup": "ihmp", "datasourceId": "ihmp",
+    result = {"id": measurements, "name": measurements, "datasourceGroup": "msd16s", "datasourceId": "msd16s",
               "defaultChartType": "", "type": "feature", "minValue": df2['minVal'][0], "maxValue": df2['maxVal'][0], "annotation": anno,
               "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5",
                            "taxonomy6",
