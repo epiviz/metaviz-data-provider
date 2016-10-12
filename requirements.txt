@@ -3,3 +3,5 @@ requests
 pandas
 numpy
 ujson
+scipy
+sklearn
