@@ -1,6 +1,7 @@
 import copy
 import math
 import pandas
+from sklearn.decomposition import PCA
 import utils
 
 
@@ -21,8 +22,12 @@ class Request(object):
 
     def __init__(self, params):
         self.params = params
+        self.result = None
 
     def get_data(self):
+        raise Exception("NotImplementedException")
+
+    def get_measurements(self):
         raise Exception("NotImplementedException")
 
 
@@ -187,6 +192,9 @@ class CombinedRequest(Request):
             rows = { "end": [], "start": [], "index": [], "metadata": {} }
             resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": None}
 
+        resRowsCols['measurements'] = {'cols': resRowsCols.get('cols'),
+                                       'rows': resRowsCols.get('rows')}
+        self.result = resRowsCols
         return resRowsCols
 
 
@@ -196,6 +204,7 @@ class PCARequest(Request):
         super(PCARequest, self).__init__(params)
 
     def get_data(self):
+
         in_params_samples = self.params.get('samples')
         in_params_selectedLevels = self.params.get('selected_levels')
 
@@ -214,6 +223,74 @@ class PCARequest(Request):
         df = utils.process_result(rq_res)
 
         print(df)
+
+        forPCAdf = df[["agg", "s.id", "label"]]
+
+        forPCAmat = pandas.pivot_table(df, index=["label"], columns="s.id", values="agg", fill_value=0)
+
+        print(forPCAmat)
+        pca = PCA(n_components = 2)
+        pca.fit(forPCAmat)
+        print(pca.components_)
+
+        cols = {}
+        cols['pca1'] = pca.components_[0]
+        cols['pca2']= pca.components_[1]
+
+        count = 0
+
+        vals = []
+
+        qryStr2 = "MATCH (s:Sample) WHERE s.id IN " + tick_samples + " RETURN s"
+
+        rq_res2 = utils.cypher_call(qryStr2)
+        df2 = utils.process_result_graph(rq_res2)
+        print(df2)
+        vals = []
+
+        for index, row in df2.iterrows():
+            temp = {}
+            print(index)
+            print(row)
+            print(row.keys())
+            print(row.keys().values)
+            for key in row.keys().values:
+                temp[key] = row[key]
+            temp['pca1'] = cols['pca1'][index]
+            temp['pca2'] = cols['pca2'][index]
+            print(temp)
+            temp['sample_id'] = temp['id']
+            del temp['id']
+            vals.append(temp)
+
+
+        # for col in forPCAmat:
+        #     row = {}
+        #     row['pca1'] = cols['pca1'][count]
+        #     row['pca2'] = cols['pca2'][count]
+        #     row['sample_id'] = col
+        #     vals.append(row)
+        #     count = count+1
+
+        print(vals)
+
+        measurements = {}
+        for s in vals:
+            sample_id = s.get('sample_id')
+            pca1 = s.get('pca1')
+            pca2 = s.get('pca2')
+            measurements[sample_id] = {'pca1': pca1,
+                                       'pca2': pca2 }
+
+        resRowsCols = {"data": vals,
+                       "measurements": measurements}
+        self.result = resRowsCols
+        return resRowsCols
+
+    def get_measurements(self):
+        if self.result:
+            return self.result.get('measurements')
+        return self.get_data().get('measurements')
 
 
 class HierarchyRequest(Request):
@@ -290,6 +367,7 @@ class HierarchyRequest(Request):
                 result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
             return result
+
 
     @staticmethod
     def row_to_dict(row):
@@ -424,10 +502,20 @@ class DiversityRequest(Request):
 
         print(vals)
 
-        resRowsCols = {"data": vals}
+        measurements = {}
+        for s in vals:
+            sample_id = s.get('sample_id')
+            alpha_diversity = s.get('alphaDiversity')
+            measurements[sample_id] = {'alphaDiversity': alpha_diversity}
+
+        resRowsCols = {"data": vals,
+                       "measurements": measurements}
+        self.result = resRowsCols
 
         return resRowsCols
 
-
-
-
+    def get_measurements(self):
+        if self.result:
+            return self.result.get('measurements')
+        return self.get_data().get('measurements')
+    
