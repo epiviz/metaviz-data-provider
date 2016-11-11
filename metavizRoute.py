@@ -55,12 +55,9 @@ def process_api():
         result = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels, in_params_samples)
         errorStr = None
     elif in_params_method == "search":
-        print "here"
-        print request
         in_param_datasource = request.values['params[datasource]']
         in_param_searchQuery = request.values['params[q]']
         in_param_maxResults = request.values['params[maxResults]']
-        print in_param_datasource, in_param_maxResults, in_param_searchQuery
         result = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
         errorStr = None
 
