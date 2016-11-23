@@ -18,20 +18,23 @@ def get_data(in_params_selectedLevels, in_params_samples):
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
 
-    print(df)
+    #print(df)
 
     forPCAdf = df[["agg", "s.id", "label"]]
 
     forPCAmat = pandas.pivot_table(df, index=["label"], columns="s.id", values="agg", fill_value=0)
     
-    print(forPCAmat)
+    #print(forPCAmat)
     pca = PCA(n_components = 2)
     pca.fit(forPCAmat)
-    print(pca.components_)
+    #print(pca.components_)
+    #print(pca.explained_variance_ratio_)
 
     cols = {}
-    cols['pca1'] = pca.components_[0]
-    cols['pca2']= pca.components_[1]
+    cols['PC1'] = pca.components_[0]
+    #cols['pc1_variance_explained'] = pca.explained_variance_ratio_[0]
+    cols['PC2']= pca.components_[1]
+    #cols['pc2_variance_explained'] = pca.explained_variance_ratio_[1]
 
     count = 0
 
@@ -41,24 +44,25 @@ def get_data(in_params_selectedLevels, in_params_samples):
 
     rq_res2 = utils.cypher_call(qryStr2)
     df2 = utils.process_result_graph(rq_res2)
-    print(df2)
+    #print(df2)
     vals = []
 
     for index, row in df2.iterrows():
         temp = {}
-        print(index)
-        print(row)
-        print(row.keys())
-        print(row.keys().values)
+        #print(index)
+        #print(row)
+        #print(row.keys())
+        #print(row.keys().values)
         for key in row.keys().values:
             temp[key] = row[key]
-        temp['pca1'] = cols['pca1'][index]
-        temp['pca2'] = cols['pca2'][index]
-        print(temp)
+        temp['PC1'] = cols['PC1'][index]
+        temp['PC2'] = cols['PC2'][index]
+        #temp['pc1_variance_explained'] = cols['pc1_variance_explained']
+        #temp['pc2_variance_explained'] = cols['pc2_variance_explained']
+        #print(temp)
         temp['sample_id'] = temp['id']
         del temp['id']
         vals.append(temp)
-
 
     # for col in forPCAmat:
     #     row = {}
@@ -68,8 +72,14 @@ def get_data(in_params_selectedLevels, in_params_samples):
     #     vals.append(row)
     #     count = count+1
 
-    print(vals)
+    #print(vals)
 
     resRowsCols = {"data": vals}
+    variance_explained = pca.explained_variance_ratio_
+    variance_explained[0] = round(variance_explained[0]*100.0, 2)
+    variance_explained[1] = round(variance_explained[1]*100.0, 2)
+    resRowsCols['pca_variance_explained'] = variance_explained
+
+    #print resRowsCols
 
     return resRowsCols
