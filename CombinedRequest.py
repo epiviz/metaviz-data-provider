@@ -1,12 +1,18 @@
 import utils
 import pandas
 
-def get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels, in_params_samples):
-
-    #default aggregation
-    # if len(in_params_selectedLevels) == 0:
-    #     in_params_selectedLevels = {'3': 2}
-
+def get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels,
+             in_params_samples):
+    """
+    Aggregates counts to the selected nodes in the feature hierarchy and returns the counts for the samples selected.
+    :param in_params_start: Start of range for features to use during aggregation
+    :param in_params_end: End of range for features to use during aggregation
+    :param in_params_order: Order of features
+    :param in_params_selection: Features nodes and the selection type of expanded, aggregated, or removed
+    :param in_params_selectedLevels: Level of the hierarchy to use
+    :param in_params_samples: Samples to compute aggregation with
+    :return:
+    """
     tick_samples = in_params_samples.replace("\"", "\'")
 
     # get the min selected Level if aggregated at multiple levels
@@ -27,12 +33,11 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         selNodes = selNodes[:-1]
     selNodes += "]"
 
-    # if minSelectedLevel == 6:
-    #     qryStr = "MATCH (f:Feature)<-[v:VALUE]-(s:Sample) USING INDEX s:Sample(id) WHERE (f.depth=" + str(
-    #     minSelectedLevel) + " OR f.id IN " + selNodes + ") AND (f.start >= " + in_params_start + " AND f.end < " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
-    # else:
     qryStr = "MATCH (f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) USING INDEX s:Sample(id) WHERE (f.depth=" + str(
-        minSelectedLevel) + " OR f.id IN " + selNodes + ") AND (f.start >= " + in_params_start + " AND f.end <= " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
+        minSelectedLevel) + " OR f.id IN " + selNodes + ") AND (f.start >= " + in_params_start + " AND " \
+        "f.end <= " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg " \
+        "RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, " \
+        "f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
@@ -58,13 +63,10 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
                     df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
         # create a pivot_table where columns are samples and rows are features
-
-        #df_pivot = pandas.pivot_table(df, rows=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
-        #                              cols="s.id", values="agg", fill_value=0).sortlevel("index")
-
         # for pandas > 0.17
-        df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
-                                       columns="s.id", values="agg", fill_value=0).sortlevel("index")
+        df_pivot = pandas.pivot_table(df,
+                                    index=["id", "label", "index", "lineage", "lineageLabel", "start", "end", "order"],
+                                    columns="s.id", values="agg", fill_value=0).sortlevel("index")
 
         cols = {}
 
@@ -82,7 +84,6 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
             else:
                 rows['metadata'][row] = df_pivot.index.get_level_values(row).values.tolist()
 
-        errorStr = ""
         resRowsCols = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
 
     else:

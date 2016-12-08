@@ -3,8 +3,12 @@ import requests as rqs
 import ujson
 import pandas
 
-# process result from cypher into a data frame
 def process_result(result):
+    """
+    Process result from cypher into a data frame with specified columns
+    :param Cypher query response object
+    :return: dataframe of cypher query response
+    """
     rows = []
 
     jsResp = ujson.loads(result.text)
@@ -20,6 +24,11 @@ def process_result(result):
     return df
 
 def process_result_graph(result):
+    """
+    Process result from cypher for into a dataframe
+    :param Cypher query response object
+    :return: dataframe of cypher query response
+    """
     rows = []
 
     jsResp = ujson.loads(result.text)
@@ -34,8 +43,13 @@ def process_result_graph(result):
 
     return df
 
-# make cypher qyery calls.
+
 def cypher_call(query):
+    """
+    Route query to the neo4j REST api.  This showed the best performance compared to py2neo and python neo4j driver
+    :param query: The cypher query to send to Neo4j
+    :return: The cypher query response
+    """
     headers = {'Content-Type': 'application/json'}
     data = {'statements': [{'statement': query, 'includeStats': False}]}
 
@@ -43,9 +57,10 @@ def cypher_call(query):
                   auth=(credential.neo4j_username, credential.neo4j_password))
     return rq_res
 
-# for every instance of Flask, check if neo4j is running.
 def check_neo4j():
-
+    """
+    On start of application, checks that neo4j is running locally
+    """
     try:
         rq_res = rqs.get(url='http://localhost:7474/db/data',
                          auth=(credential.neo4j_username, credential.neo4j_password))
