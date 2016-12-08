@@ -1,8 +1,12 @@
 import utils
 
 def get_data():
-    measurements = []
-
+    """
+    This function returns the set of all samples in the database.  The first cypher query is finding all samples in the
+    database.  The second cypher query is used to find the mix and max count value for
+    all features across all samples.  This is return along with data source information including name and taxonomic
+    hierarchy level names.
+    """
     qryStr = "MATCH (s:Sample) RETURN s"
 
     rq_res = utils.cypher_call(qryStr)
@@ -21,7 +25,6 @@ def get_data():
     rq_res2 = utils.cypher_call(rowQryStr)
     df2 = utils.process_result(rq_res2)
 
-    errorStr = ""
     result = {"id": measurements, "name": measurements, "datasourceGroup": "msd16s", "datasourceId": "msd16s",
               "defaultChartType": "", "type": "feature", "minValue": df2['minVal'][0], "maxValue": df2['maxVal'][0], "annotation": anno,
               "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5",

@@ -1,7 +1,17 @@
 import utils
 
 def get_data(in_params_selection, in_params_order, in_params_selected_levels, in_params_nodeId, in_params_depth):
-
+    """
+    Finds and returns the hierarchy of the taxonomic features in the database. The hierarchy is traversed starting
+    at the root node by using the PARENT_OF relationships the paths to until all leaf nodes are discovered.  The
+    results are formatted according the the metaviz API specification.
+    :param in_params_selection: The samples selected
+    :param in_params_order: The order of the features
+    :param in_params_selected_levels: The levels for aggregation of each feature node or all nodes by default
+    :param in_params_nodeId: The id of the root node
+    :param in_params_depth:
+    :return:
+    """
     root_node = in_params_nodeId
     root_node = root_node.replace('"', "")
 
@@ -10,23 +20,22 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     if len(root_node) == 0 or root_node == "0-0":
         root_node = "0-0"
         qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
-                                                        "with collect(f2) + f as nodesFeat unwind nodesFeat as ff " \
-                                                        "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
-                                                        "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
-                                                        "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.nleaves as nleaves, " \
-                                                        "ff.order as order " \
-                                                        "order by ff.depth, ff.leafIndex, ff.order"
+                 "with collect(f2) + f as nodesFeat unwind nodesFeat as ff " \
+                 "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
+                 "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
+                 "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, " \
+                 "ff.nleaves as nleaves, ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order"
 
         tQryStr = "MATCH (f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
         taxonomy = True
     else:
-        qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) " \
-                                                        "with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
-                                                        "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
-                                                        "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
-                                                        "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.nleaves as nleaves, " \
-                                                        "ff.order as order " \
-                                                        "order by ff.depth, ff.leafIndex, ff.order"
+        qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+                 "OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) with collect(f2) + f + fParent as nodesFeat " \
+                 "unwind nodesFeat as ff return distinct ff.lineage as lineage, ff.start as start, " \
+                 "ff.label as label, ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, " \
+                 "ff.partition as partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, " \
+                 "ff.nchildren as nchildren, ff.nleaves as nleaves, ff.order as order " \
+                 "ORDER by ff.depth, ff.leafIndex, ff.order"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
@@ -67,8 +76,12 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
         return result
 
 def row_to_dict(row):
+    """
+    Helper function to format the response.
+    :param row: A row from the cypher response
+    :return: Dictionary to be loaded into a JSON response
+    """
     toRet = {}
-    # toRet['lineage'] = row['lineage']
     toRet['end'] = row['end']
     toRet['partition'] = None
     toRet['leafIndex'] = row['leafIndex']
@@ -78,7 +91,6 @@ def row_to_dict(row):
     toRet['start'] = row['start']
     toRet['depth'] = row['depth']
     toRet['globalDepth'] = row['depth']
-    # toRet['lineageLabel'] = row['lineageLabel']
     toRet['nleaves'] = row['nleaves']
     toRet['parentId'] = row['parentId']
     toRet['order'] = row['order']
@@ -90,7 +102,12 @@ def row_to_dict(row):
     return toRet
 
 def df_to_tree(root, df):
-
+    """
+    Helper function to convert dataframe to a tree formatted in JSON
+    :param root: The id of the root node of tree
+    :param df: The cypher response object for query
+    :return:
+    """
     children = df[df['parentId'] == root['id']]
 
     if len(children) == 0:
@@ -98,10 +115,10 @@ def df_to_tree(root, df):
         return root
 
     otherChildren = df[~(df['parentId'] == root['id'])]
+
     # children.sort_values('order')
     # for old version of pandas
     children.sort('order')
-    # root['size'] = len(children)
 
     for index,row in children.iterrows():
         childDict = row_to_dict(row)
