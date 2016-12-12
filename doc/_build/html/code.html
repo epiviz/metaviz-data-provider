@@ -1,0 +1,294 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Auto Generated Documentation &mdash; Neo4j Data Provider 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Neo4j Data Provider 1.0 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to data_provider’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to data_provider’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Neo4j Data Provider 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-metavizRoute">
+<span id="auto-generated-documentation"></span><h1>Auto Generated Documentation<a class="headerlink" href="#module-metavizRoute" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="metavizRoute.add_cors_headers">
+<tt class="descclassname">metavizRoute.</tt><tt class="descname">add_cors_headers</tt><big>(</big><em>response</em><big>)</big><a class="headerlink" href="#metavizRoute.add_cors_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add access control allow headers to response</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>response: Flask response to be sent</dd>
+<dt>Returns:</dt>
+<dd>response: Flask response with access control allow headers set</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="metavizRoute.process_api">
+<tt class="descclassname">metavizRoute.</tt><tt class="descname">process_api</tt><big>(</big><big>)</big><a class="headerlink" href="#metavizRoute.process_api" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send the request to the appropriate cypher query generation function.</p>
+<p>Args:</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>res: Flask response containing query result</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-MeasurementsRequest"></span><dl class="function">
+<dt id="MeasurementsRequest.get_data">
+<tt class="descclassname">MeasurementsRequest.</tt><tt class="descname">get_data</tt><big>(</big><big>)</big><a class="headerlink" href="#MeasurementsRequest.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function returns the set of all samples in the database.  The first cypher query is finding all samples in the
+database.  The second cypher query is used to find the mix and max count value for
+all features across all samples.  This is return along with data source information including name and taxonomic
+hierarchy level names.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>None</dd>
+<dt>Returns:</dt>
+<dd>result: Sample nodes information in database</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-HierarchyRequest"></span><dl class="function">
+<dt id="HierarchyRequest.df_to_tree">
+<tt class="descclassname">HierarchyRequest.</tt><tt class="descname">df_to_tree</tt><big>(</big><em>root</em>, <em>df</em><big>)</big><a class="headerlink" href="#HierarchyRequest.df_to_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to convert dataframe to a tree formatted in JSON</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>root: The id of the root node of tree
+df: The cypher response object for query</dd>
+<dt>Returns:</dt>
+<dd>root: Tree at current step</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="HierarchyRequest.get_data">
+<tt class="descclassname">HierarchyRequest.</tt><tt class="descname">get_data</tt><big>(</big><em>in_params_selection</em>, <em>in_params_order</em>, <em>in_params_selected_levels</em>, <em>in_params_nodeId</em>, <em>in_params_depth</em><big>)</big><a class="headerlink" href="#HierarchyRequest.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds and returns the hierarchy of the taxonomic features in the database. The hierarchy is traversed starting
+at the root node by using the PARENT_OF relationships the paths to until all leaf nodes are discovered.  The
+results are formatted according the the metaviz API specification.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>in_params_selection: The samples selected
+in_params_order: The order of the features
+in_params_selected_levels: The levels for aggregation of each feature node or all nodes by default
+in_params_nodeId: The id of the root node
+in_params_depth:</dd>
+<dt>Returns:</dt>
+<dd>result: Heirachy of levels in database</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="HierarchyRequest.row_to_dict">
+<tt class="descclassname">HierarchyRequest.</tt><tt class="descname">row_to_dict</tt><big>(</big><em>row</em><big>)</big><a class="headerlink" href="#HierarchyRequest.row_to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to format the response.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>row: A row from the cypher response</dd>
+<dt>Returns:</dt>
+<dd>toRet: Dictionary to be loaded into a JSON response</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-PCARequest"></span><dl class="function">
+<dt id="PCARequest.get_data">
+<tt class="descclassname">PCARequest.</tt><tt class="descname">get_data</tt><big>(</big><em>in_params_selectedLevels</em>, <em>in_params_samples</em><big>)</big><a class="headerlink" href="#PCARequest.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes PCA over the selected samples and the given level of the hierarchy</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>in_params_selectedLevels:  Level of hierarchy of features to compute PCA
+in_params_samples: Samples to use to compute PCA</dd>
+<dt>Returns:</dt>
+<dd>resRowsCols: PCA for the samples at the selected level</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-CombinedRequest"></span><dl class="function">
+<dt id="CombinedRequest.get_data">
+<tt class="descclassname">CombinedRequest.</tt><tt class="descname">get_data</tt><big>(</big><em>in_params_start</em>, <em>in_params_end</em>, <em>in_params_order</em>, <em>in_params_selection</em>, <em>in_params_selectedLevels</em>, <em>in_params_samples</em><big>)</big><a class="headerlink" href="#CombinedRequest.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregates counts to the selected nodes in the feature hierarchy and returns the counts for the samples selected.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>in_params_start: Start of range for features to use during aggregation
+in_params_end: End of range for features to use during aggregation
+in_params_order: Order of features
+in_params_selection: Features nodes and the selection type of expanded, aggregated, or removed
+in_params_selectedLevels: Level of the hierarchy to use
+in_params_samples: Samples to compute aggregation with</dd>
+<dt>Returns:</dt>
+<dd>resRowsCols: Aggregated counts for the selected Features over the selected Samples</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-utils"></span><dl class="function">
+<dt id="utils.check_neo4j">
+<tt class="descclassname">utils.</tt><tt class="descname">check_neo4j</tt><big>(</big><big>)</big><a class="headerlink" href="#utils.check_neo4j" title="Permalink to this definition">¶</a></dt>
+<dd><p>On start of application, checks that neo4j is running locally</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>none</dd>
+<dt>Return:</dt>
+<dd>none</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.cypher_call">
+<tt class="descclassname">utils.</tt><tt class="descname">cypher_call</tt><big>(</big><em>query</em><big>)</big><a class="headerlink" href="#utils.cypher_call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route query to the neo4j REST api.  This showed the best performance compared to py2neo and python neo4j driver</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>query: Cypher query to send to Neo4j</dd>
+<dt>Returns:</dt>
+<dd>rq_res: Cypher query response</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.process_result">
+<tt class="descclassname">utils.</tt><tt class="descname">process_result</tt><big>(</big><em>result</em><big>)</big><a class="headerlink" href="#utils.process_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process result from cypher into a data frame with specified columns</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>result: Cypher query response object</dd>
+<dt>Returns:</dt>
+<dd>df: dataframe of cypher query response</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.process_result_graph">
+<tt class="descclassname">utils.</tt><tt class="descname">process_result_graph</tt><big>(</big><em>result</em><big>)</big><a class="headerlink" href="#utils.process_result_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process result from cypher for into a dataframe</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>result: Cypher query response object</dd>
+<dt>Returns:</dt>
+<dd>df: dataframe of cypher query response</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-PartitionsRequest"></span><dl class="function">
+<dt id="PartitionsRequest.get_data">
+<tt class="descclassname">PartitionsRequest.</tt><tt class="descname">get_data</tt><big>(</big><big>)</big><a class="headerlink" href="#PartitionsRequest.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the range of features in the database.  The cypher query finds the root of the Neo4j feature hierarchy and
+retrieves the start and end values which denote the range of features.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>None</dd>
+<dt>Returns:</dt>
+<dd>arr: Feature range under root of tree</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-DiversityRequest"></span><dl class="function">
+<dt id="DiversityRequest.get_data">
+<tt class="descclassname">DiversityRequest.</tt><tt class="descname">get_data</tt><big>(</big><em>in_params_selectedLevels</em>, <em>in_params_samples</em><big>)</big><a class="headerlink" href="#DiversityRequest.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes Alpha Diversity using the specified samples and level of hierarchy
+:param in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
+:param in_params_samples: Samples to use for computing Alpha Diversity
+:return:</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
+in_params_samples: Samples to use for computing Alpha Diversity</dd>
+<dt>Returns:</dt>
+<dd>resRowsCols: Alpha diversity for the samples at the selected level</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to data_provider&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/code.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to data_provider’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Neo4j Data Provider 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Justin Wagner and Jayaram Kancherla.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

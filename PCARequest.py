@@ -2,13 +2,25 @@ import utils
 import pandas
 from sklearn.decomposition import PCA
 
+"""
+.. module:: PCARequest
+   :synopsis: Query Neo4j Samples nodes and compute PCA over Features at specified level
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
 
 def get_data(in_params_selectedLevels, in_params_samples):
     """
     Computes PCA over the selected samples and the given level of the hierarchy
-    :param in_params_selectedLevels:  Level of hierarchy of features to compute PCA
-    :param in_params_samples: Samples to use to compute PCA
-    :return:
+
+    Args:
+     in_params_selectedLevels:  Level of hierarchy of features to compute PCA
+     in_params_samples: Samples to use to compute PCA
+
+    Returns:
+     resRowsCols: PCA for the samples at the selected level
+
     """
 
     tick_samples = in_params_samples.replace("\"", "\'")

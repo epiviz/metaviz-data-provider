@@ -1,17 +1,29 @@
 import utils
 import pandas
 
+"""
+.. module:: CombinedRequest
+   :synopsis: Query Neo4j Sample nodes and compute aggregation function over selected Feature nodes
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
+
 def get_data(in_params_start, in_params_end, in_params_order, in_params_selection, in_params_selectedLevels,
              in_params_samples):
     """
     Aggregates counts to the selected nodes in the feature hierarchy and returns the counts for the samples selected.
-    :param in_params_start: Start of range for features to use during aggregation
-    :param in_params_end: End of range for features to use during aggregation
-    :param in_params_order: Order of features
-    :param in_params_selection: Features nodes and the selection type of expanded, aggregated, or removed
-    :param in_params_selectedLevels: Level of the hierarchy to use
-    :param in_params_samples: Samples to compute aggregation with
-    :return:
+
+    Args:
+        in_params_start: Start of range for features to use during aggregation
+        in_params_end: End of range for features to use during aggregation
+        in_params_order: Order of features
+        in_params_selection: Features nodes and the selection type of expanded, aggregated, or removed
+        in_params_selectedLevels: Level of the hierarchy to use
+        in_params_samples: Samples to compute aggregation with
+
+    Returns:
+        resRowsCols: Aggregated counts for the selected Features over the selected Samples
     """
     tick_samples = in_params_samples.replace("\"", "\'")
 

@@ -1,16 +1,29 @@
 import utils
 
+"""
+.. module:: HierarchyRequest
+   :synopsis: Query Neo4j Feature nodes and return hierarchy of levels
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
+
 def get_data(in_params_selection, in_params_order, in_params_selected_levels, in_params_nodeId, in_params_depth):
     """
     Finds and returns the hierarchy of the taxonomic features in the database. The hierarchy is traversed starting
     at the root node by using the PARENT_OF relationships the paths to until all leaf nodes are discovered.  The
     results are formatted according the the metaviz API specification.
-    :param in_params_selection: The samples selected
-    :param in_params_order: The order of the features
-    :param in_params_selected_levels: The levels for aggregation of each feature node or all nodes by default
-    :param in_params_nodeId: The id of the root node
-    :param in_params_depth:
-    :return:
+
+    Args:
+        in_params_selection: The samples selected
+        in_params_order: The order of the features
+        in_params_selected_levels: The levels for aggregation of each feature node or all nodes by default
+        in_params_nodeId: The id of the root node
+        in_params_depth:
+
+    Returns:
+     result: Heirachy of levels in database
+
     """
     root_node = in_params_nodeId
     root_node = root_node.replace('"', "")
@@ -78,8 +91,12 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
 def row_to_dict(row):
     """
     Helper function to format the response.
-    :param row: A row from the cypher response
-    :return: Dictionary to be loaded into a JSON response
+
+    Args:
+        row: A row from the cypher response
+
+    Returns:
+        toRet: Dictionary to be loaded into a JSON response
     """
     toRet = {}
     toRet['end'] = row['end']
@@ -104,9 +121,13 @@ def row_to_dict(row):
 def df_to_tree(root, df):
     """
     Helper function to convert dataframe to a tree formatted in JSON
-    :param root: The id of the root node of tree
-    :param df: The cypher response object for query
-    :return:
+
+    Args:
+        root: The id of the root node of tree
+        df: The cypher response object for query
+
+    Returns:
+        root: Tree at current step
     """
     children = df[df['parentId'] == root['id']]
 
