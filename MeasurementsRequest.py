@@ -1,11 +1,25 @@
 import utils
 
+"""
+.. module:: MeasurementsRequest
+   :synopsis: Query Neo4j Sample nodes and return node information
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
+
 def get_data():
     """
     This function returns the set of all samples in the database.  The first cypher query is finding all samples in the
     database.  The second cypher query is used to find the mix and max count value for
     all features across all samples.  This is return along with data source information including name and taxonomic
     hierarchy level names.
+
+    Args:
+     None
+
+    Returns:
+     result: Sample nodes information in database
     """
     qryStr = "MATCH (s:Sample) RETURN s"
 

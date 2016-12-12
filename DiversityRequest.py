@@ -3,12 +3,27 @@ import pandas
 import copy
 import math
 
+"""
+.. module:: DiversityRequest
+   :synopsis: Query Neo4j Sample nodes and compute Diversity over selected level of Feature nodes
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
+
 def get_data(in_params_selectedLevels, in_params_samples):
     """
     Computes Alpha Diversity using the specified samples and level of hierarchy
     :param in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
     :param in_params_samples: Samples to use for computing Alpha Diversity
     :return:
+
+    Args:
+        in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
+        in_params_samples: Samples to use for computing Alpha Diversity
+
+    Returns:
+        resRowsCols: Alpha diversity for the samples at the selected level
     """
 
     tick_samples = in_params_samples.replace("\"", "\'")

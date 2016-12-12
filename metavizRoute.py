@@ -5,11 +5,23 @@ import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
+"""
+.. module:: metavizRoute
+   :synopsis: Routing HTTP requests to appropriate query fucntion
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
+
 def add_cors_headers(response):
     """
     Add access control allow headers to response
-    :param response: Flask response to be sent
-    :return: Flask response with access control allow headers set
+
+    Args:
+     response: Flask response to be sent
+
+    Returns:
+     response: Flask response with access control allow headers set
     """
     response.headers['Access-Control-Allow-Origin'] = '*'
     if request.method == 'OPTIONS':
@@ -28,7 +40,11 @@ app.after_request(add_cors_headers)
 def process_api():
     """
     Send the request to the appropriate cypher query generation function.
-    :return: Flask response containing query result
+
+    Args:
+
+    Returns:
+     res: Flask response containing query result
     """
 
     # For OPTIONS request, return an emtpy response

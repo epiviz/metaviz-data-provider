@@ -3,11 +3,23 @@ import requests as rqs
 import ujson
 import pandas
 
+"""
+.. module:: utils
+   :synopsis: Send requests to cypher engine and process results
+
+.. moduleauthor:: Justin Wagner and Jayaram Kancherla
+
+"""
+
 def process_result(result):
     """
     Process result from cypher into a data frame with specified columns
-    :param Cypher query response object
-    :return: dataframe of cypher query response
+
+    Args:
+     result: Cypher query response object
+
+    Returns:
+     df: dataframe of cypher query response
     """
     rows = []
 
@@ -26,8 +38,12 @@ def process_result(result):
 def process_result_graph(result):
     """
     Process result from cypher for into a dataframe
-    :param Cypher query response object
-    :return: dataframe of cypher query response
+
+    Args:
+     result: Cypher query response object
+
+    Returns:
+     df: dataframe of cypher query response
     """
     rows = []
 
@@ -47,8 +63,12 @@ def process_result_graph(result):
 def cypher_call(query):
     """
     Route query to the neo4j REST api.  This showed the best performance compared to py2neo and python neo4j driver
-    :param query: The cypher query to send to Neo4j
-    :return: The cypher query response
+
+    Args:
+     query: Cypher query to send to Neo4j
+
+    Returns:
+     rq_res: Cypher query response
     """
     headers = {'Content-Type': 'application/json'}
     data = {'statements': [{'statement': query, 'includeStats': False}]}
@@ -60,6 +80,12 @@ def cypher_call(query):
 def check_neo4j():
     """
     On start of application, checks that neo4j is running locally
+
+    Args:
+        none
+
+    Return:
+        none
     """
     try:
         rq_res = rqs.get(url='http://localhost:7474/db/data',
