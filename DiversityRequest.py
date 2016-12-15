@@ -11,7 +11,7 @@ import math
 
 """
 
-def get_data(in_params_selectedLevels, in_params_samples):
+def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     """
     Computes Alpha Diversity using the specified samples and level of hierarchy
     :param in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
@@ -21,7 +21,7 @@ def get_data(in_params_selectedLevels, in_params_samples):
     Args:
         in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
         in_params_samples: Samples to use for computing Alpha Diversity
-
+        in_datasource: namespace to query
     Returns:
         resRowsCols: Alpha diversity for the samples at the selected level
     """

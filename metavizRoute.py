@@ -63,31 +63,37 @@ def process_api():
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_nodeId = request.values['params[nodeId]']
         in_params_depth = request.values['params[depth]']
+        in_datasource = request.values['params[datasource]']
         result = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels,
-                                           in_params_nodeId, in_params_depth)
+                                           in_params_nodeId, in_params_depth, in_datasource)
         errorStr = None
 
     elif in_params_method == "partitions":
-        result = PartitionsRequest.get_data()
+        in_datasource = request.values['params[datasource]']
+        result = PartitionsRequest.get_data(in_datasource)
         errorStr = None
 
     elif in_params_method == "measurements":
-        result = MeasurementsRequest.get_data()
+        in_datasource = request.values['params[datasource]']
+        result = MeasurementsRequest.get_data(in_datasource)
         errorStr = None
 
     elif in_params_method == "pca":
+        in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result = PCARequest.get_data(in_params_selectedLevels, in_params_samples)
+        result = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
         errorStr = None
 
     elif in_params_method == "diversity":
+        in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples)
+        result = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
         errorStr = None
 
     elif in_params_method == "combined":
+        in_datasource = request.values['params[datasource]']
         in_params_end = request.values['params[end]']
         in_params_start = request.values['params[start]']
         in_params_order = eval(request.values['params[order]'])
@@ -95,7 +101,7 @@ def process_api():
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
         result = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
-                                          in_params_selectedLevels, in_params_samples)
+                                          in_params_selectedLevels, in_params_samples, in_datasource)
         errorStr = None
     elif in_params_method == "search":
         in_param_datasource = request.values['params[datasource]']

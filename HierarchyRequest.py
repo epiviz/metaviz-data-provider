@@ -8,7 +8,7 @@ import utils
 
 """
 
-def get_data(in_params_selection, in_params_order, in_params_selected_levels, in_params_nodeId, in_params_depth):
+def get_data(in_params_selection, in_params_order, in_params_selected_levels, in_params_nodeId, in_params_depth, in_datasource):
     """
     Finds and returns the hierarchy of the taxonomic features in the database. The hierarchy is traversed starting
     at the root node by using the PARENT_OF relationships the paths to until all leaf nodes are discovered.  The
@@ -19,8 +19,8 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
         in_params_order: The order of the features
         in_params_selected_levels: The levels for aggregation of each feature node or all nodes by default
         in_params_nodeId: The id of the root node
-        in_params_depth:
-
+        in_params_depth: level depth to query at
+        in_datasource: namespace to query
     Returns:
      result: Heirachy of levels in database
 
@@ -32,17 +32,17 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
 
     if len(root_node) == 0 or root_node == "0-0":
         root_node = "0-0"
-        qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+        qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[NAMESPACE_OF]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
                  "with collect(f2) + f as nodesFeat unwind nodesFeat as ff " \
                  "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
                  "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
                  "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, " \
                  "ff.nleaves as nleaves, ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order"
 
-        tQryStr = "MATCH (f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
+        tQryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[:NAMESPACE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
         taxonomy = True
     else:
-        qryStr = "MATCH (f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+        qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[NAMESPACE_OF]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
                  "OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) with collect(f2) + f + fParent as nodesFeat " \
                  "unwind nodesFeat as ff return distinct ff.lineage as lineage, ff.start as start, " \
                  "ff.label as label, ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, " \
