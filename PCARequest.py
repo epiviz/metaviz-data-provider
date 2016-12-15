@@ -10,13 +10,14 @@ from sklearn.decomposition import PCA
 
 """
 
-def get_data(in_params_selectedLevels, in_params_samples):
+def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     """
     Computes PCA over the selected samples and the given level of the hierarchy
 
     Args:
      in_params_selectedLevels:  Level of hierarchy of features to compute PCA
      in_params_samples: Samples to use to compute PCA
+     in_datasource: namespace to query
 
     Returns:
      resRowsCols: PCA for the samples at the selected level
