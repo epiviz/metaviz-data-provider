@@ -34,7 +34,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
 
-    qryStr = "MATCH (f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
+    qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[:NAMESPACE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
         "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, " \
         "f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
         "f.lineageLabel as lineageLabel, f.order as order"

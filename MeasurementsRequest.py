@@ -25,8 +25,8 @@ def get_data(in_datasource):
              "RETURN DISTINCT n,s"
 
     rq_res = utils.cypher_call(qryStr)
-    df = utils.process_result_graph(rq_res)
-
+    df = utils.process_result(rq_res)
+    print(df)
     measurements = []
 
     anno = []
