@@ -37,7 +37,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                  "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
                  "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, " \
                  "ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, " \
-                 "ff.nleaves as nleaves, ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order"
+                 "ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order"
 
         tQryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[:NAMESPACE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
         taxonomy = True
@@ -47,7 +47,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                  "unwind nodesFeat as ff return distinct ff.lineage as lineage, ff.start as start, " \
                  "ff.label as label, ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, " \
                  "ff.partition as partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, " \
-                 "ff.nchildren as nchildren, ff.nleaves as nleaves, ff.order as order " \
+                 "ff.nchildren as nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order " \
                  "ORDER by ff.depth, ff.leafIndex, ff.order"
 
     rq_res = utils.cypher_call(qryStr)
@@ -113,7 +113,7 @@ def row_to_dict(row):
     toRet['order'] = row['order']
     toRet['id'] = row['id']
     toRet['selectionType'] = 1
-    toRet['taxonomy'] = 'taxonomy' + (str(int(toRet['depth']) + 1))
+    toRet['taxonomy'] = row['taxonomy']
     toRet['size'] = 1
     toRet['children'] = []
     return toRet
