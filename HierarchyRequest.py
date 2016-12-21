@@ -42,7 +42,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
         tQryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[:NAMESPACE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
         taxonomy = True
     else:
-        qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[NAMESPACE_OF]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+        qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[NAMESPACE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
                  "OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) with collect(f2) + f + fParent as nodesFeat " \
                  "unwind nodesFeat as ff return distinct ff.lineage as lineage, ff.start as start, " \
                  "ff.label as label, ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, " \
