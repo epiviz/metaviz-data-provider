@@ -5,3 +5,4 @@ numpy
 ujson
 scipy
 sklearn
+logging
