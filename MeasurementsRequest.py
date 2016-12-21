@@ -26,7 +26,6 @@ def get_data(in_datasource):
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
-    print(df)
     measurements = []
 
     anno = []
