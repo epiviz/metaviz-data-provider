@@ -28,7 +28,15 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     tick_samples = in_params_samples.replace("\"", "\'")
 
     # get the min selected Level if aggregated at multiple levels
-    minSelectedLevel = 6
+    qryStr = "MATCH (s:Sample)-[:VALUE]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+
+    rq_res = utils.cypher_call(qryStr)
+    df = utils.process_result(rq_res)
+
+    minSelectedLevel = int(df['depth'].values[0])
+    if minSelectedLevel is None:
+        minSelectedLevel = 6
+
     for level in in_params_selectedLevels.keys():
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
