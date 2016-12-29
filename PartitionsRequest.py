@@ -20,7 +20,7 @@ def get_data(in_datasource):
      arr: Feature range under root of tree
     """
 
-    qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[NAMESPACE_OF]->(f:Feature {id:'0-0'}) RETURN  f.start as start, f.end as end"
+    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature {id:'0-0'}) RETURN  f.start as start, f.end as end"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)

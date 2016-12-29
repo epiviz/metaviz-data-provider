@@ -35,9 +35,9 @@ application.after_request(add_cors_headers)
 
 
 # Route for POST, OPTIONS, and GET requests
-# @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
-# @application.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
-@application.route('/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
+#@application.route('/', methods = ['POST', 'OPTIONS', 'GET'])
 def process_api():
     """
     Send the request to the appropriate cypher query generation function.
