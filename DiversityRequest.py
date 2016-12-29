@@ -30,7 +30,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     diversity_type = "shannon"
     # get the min selected Level if aggregated at multiple levels
 
-    qryStr = "MATCH (s:Sample)-[:VALUE]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
@@ -43,7 +43,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
 
-    qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[:NAMESPACE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
+    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
         "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, " \
         "f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
         "f.lineageLabel as lineageLabel, f.order as order"

@@ -28,7 +28,7 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     tick_samples = in_params_samples.replace("\"", "\'")
 
     # get the min selected Level if aggregated at multiple levels
-    qryStr = "MATCH (s:Sample)-[:VALUE]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
@@ -53,8 +53,8 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         selNodes = selNodes[:-1]
     selNodes += "]"
 
-    qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'}) " \
-        "MATCH (ns)-[:NAMESPACE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample)" \
+    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) " \
+        "MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample)" \
         "USING INDEX s:Sample(id) WHERE (f.depth=" + str(minSelectedLevel) + " OR f.id IN " + selNodes + ") AND " \
         "(f.start >= " + in_params_start + " AND " \
         "f.end <= " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg " \

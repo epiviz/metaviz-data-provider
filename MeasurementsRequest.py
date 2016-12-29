@@ -21,8 +21,8 @@ def get_data(in_datasource):
     Returns:
      result: Sample nodes information in database
     """
-    qryStr = "MATCH (n:Namespace {label: '" + in_datasource + "'})-[NAMESPACE_OF]->()-[LEAF_OF]->()<-[VALUE]-(s:Sample)" \
-             "RETURN DISTINCT n,s"
+    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(s:Sample)" \
+             "RETURN DISTINCT ds,s"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
@@ -38,8 +38,8 @@ def get_data(in_datasource):
         measurements.append(temp['id'])
         del temp['id']
         anno.append(temp)
-        dsGroup.append(row['n']['label'])
-        dsId.append(row['n']['label'])
+        dsGroup.append(row['ds']['label'])
+        dsId.append(row['ds']['label'])
 
     rowQryStr = "MATCH ()-[r]-() WHERE EXISTS(r.val) RETURN min(r.val) as minVal, max(r.val) as maxVal"
 
