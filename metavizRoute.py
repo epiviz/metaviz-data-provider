@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Response
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest
 
 application = Flask(__name__)
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
