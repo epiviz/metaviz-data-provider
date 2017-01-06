@@ -28,7 +28,7 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     tick_samples = in_params_samples.replace("\"", "\'")
 
     # get the min selected Level if aggregated at multiple levels
-    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {datasource: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
