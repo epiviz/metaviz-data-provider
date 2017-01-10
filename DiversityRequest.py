@@ -21,7 +21,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     Args:
         in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
         in_params_samples: Samples to use for computing Alpha Diversity
-        in_datasource: namespace to query
+        in_datasource: datasource to query
     Returns:
         resRowsCols: Alpha diversity for the samples at the selected level
     """
@@ -30,7 +30,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     diversity_type = "shannon"
     # get the min selected Level if aggregated at multiple levels
 
-    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {namespace: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {datasource: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
