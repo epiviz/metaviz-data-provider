@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request, Response
+from flask_cache import Cache
 import ujson
 import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest
 
 application = Flask(__name__)
+cache = Cache(application, config={'CACHE_TYPE': 'simple'})
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 """
@@ -71,12 +73,18 @@ def process_api():
 
     elif in_params_method == "partitions":
         in_datasource = request.values['params[datasource]']
-        result = PartitionsRequest.get_data(in_datasource)
+        @cache.memoize()
+        def partition_cache_call(in_datasource):
+            return PartitionsRequest.get_data(in_datasource)
+        result = partition_cache_call(in_datasource)
         errorStr = None
 
     elif in_params_method == "measurements":
         in_datasource = request.values['params[datasource]']
-        result = MeasurementsRequest.get_data(in_datasource)
+        @cache.memoize()
+        def measurement_cache_call(in_datasource):
+            return MeasurementsRequest.get_data(in_datasource)
+        result = measurement_cache_call(in_datasource)
         errorStr = None
 
     elif in_params_method == "pca":
