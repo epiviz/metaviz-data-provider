@@ -19,7 +19,7 @@ def get_data(in_file_id):
      redirect_url: Metaviz URL for workspace
     """
 
-    lookup_table_file = "igs_workspace_lookup_table.csv"
+    lookup_table_file = "./data/igs_workspace_lookup_table.csv"
     df = pandas.read_csv(lookup_table_file)
     ws_id = df.loc[df['n.id'] == in_file_id]['metaviz_ws_id'].values[0]
 
