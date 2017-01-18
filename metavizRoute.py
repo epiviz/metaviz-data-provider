@@ -35,7 +35,7 @@ application.after_request(add_cors_headers)
 
 
 # Route for POST, OPTIONS, and GET requests
-@application.route('/ihmp_redirect/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api/ihmp_redirect/', methods = ['POST', 'OPTIONS', 'GET'])
 def process_redirect():
     """
     Send a request to the RedirectRequest class to lookup Metaviz workspace id of iHMP file id
