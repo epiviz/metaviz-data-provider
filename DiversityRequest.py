@@ -30,7 +30,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     diversity_type = "shannon"
     # get the min selected Level if aggregated at multiple levels
 
-    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {datasource: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature)<-[:LEAF_OF]-(:Feature)<-[:PARENT_OF*]-(:Feature)<-[:DATASOURCE_OF]-(ds:Datasource {label: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
 
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
