@@ -39,7 +39,6 @@ application.after_request(add_cors_headers)
 # Route for POST, OPTIONS, and GET requests
 @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
 @application.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
-#@application.route('/', methods = ['POST', 'OPTIONS', 'GET'])
 def process_api():
     """
     Send the request to the appropriate cypher query generation function.
@@ -59,6 +58,15 @@ def process_api():
 
     in_params_method = request.values['method']
 
+    result = None
+    errorStr = None
+
+    if utils.check_neo4j() != True:
+        errorStr = "Neo4j is not running"
+        reqId = request.values['id']
+        res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=500,
+                   mimetype="application/json")
+        return res
 
     if(in_params_method == "hierarchy"):
         in_params_order = eval(request.values['params[order]'])
@@ -67,9 +75,8 @@ def process_api():
         in_params_nodeId = request.values['params[nodeId]']
         in_params_depth = request.values['params[depth]']
         in_datasource = request.values['params[datasource]']
-        result = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels,
+        result,errorStr = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels,
                                            in_params_nodeId, in_params_depth, in_datasource)
-        errorStr = None
 
     elif in_params_method == "partitions":
         in_datasource = request.values['params[datasource]']
@@ -91,15 +98,13 @@ def process_api():
         in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
-        errorStr = None
+        result, errorStr = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
 
     elif in_params_method == "diversity":
         in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
-        errorStr = None
+        result, errorStr = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
 
     elif in_params_method == "combined":
         in_datasource = request.values['params[datasource]']
@@ -109,7 +114,7 @@ def process_api():
         in_params_selection = eval(request.values['params[selection]'])
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
+        result, errorStr = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
                                           in_params_selectedLevels, in_params_samples, in_datasource)
         errorStr = None
 
@@ -117,8 +122,7 @@ def process_api():
         in_param_datasource = request.values['params[datasource]']
         in_param_searchQuery = request.values['params[q]']
         in_param_maxResults = request.values['params[maxResults]']
-        result = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
-        errorStr = None
+        result, errorStr = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
 
     reqId = request.values['id']
     res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=200,
@@ -126,10 +130,4 @@ def process_api():
     return res
 
 if __name__ == '__main__':
-    if(utils.check_neo4j()):
-        application.run(debug=True
-                       # use on AWS
-                       #  ,host="0.0.0.0"
-                       )
-    else:
-        print("Neo4j is not running")
+    application.run(debug=True)

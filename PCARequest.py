@@ -1,5 +1,6 @@
 import utils
 import pandas
+import sys
 from sklearn.decomposition import PCA
 
 """
@@ -30,8 +31,16 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
 
     qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature)<-[:LEAF_OF]-(:Feature)<-[:PARENT_OF*]-(:Feature)<-[:DATASOURCE_OF]-(ds:Datasource {label: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
 
-    rq_res = utils.cypher_call(qryStr)
-    df = utils.process_result(rq_res)
+    result = None
+    error = None
+    try:
+        rq_res = utils.cypher_call(qryStr)
+        df = utils.process_result(rq_res)
+
+    except:
+        error_info = sys.exc_info()
+        error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+        return result, error
 
     minSelectedLevel = int(df['depth'].values[0])
     if minSelectedLevel is None:
@@ -46,40 +55,44 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
          "as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
          "f.lineageLabel as lineageLabel, f.order as order"
 
+    try:
+        rq_res = utils.cypher_call(qryStr)
+        df = utils.process_result(rq_res)
 
-    rq_res = utils.cypher_call(qryStr)
-    df = utils.process_result(rq_res)
-
-    forPCAmat = pandas.pivot_table(df, index=["label"], columns="s.id", values="agg", fill_value=0)
+        forPCAmat = pandas.pivot_table(df, index=["label"], columns="s.id", values="agg", fill_value=0)
     
-    pca = PCA(n_components = 2)
-    pca.fit(forPCAmat)
-    variance_explained = pca.explained_variance_ratio_
+        pca = PCA(n_components = 2)
+        pca.fit(forPCAmat)
+        variance_explained = pca.explained_variance_ratio_
 
-    cols = {}
-    cols['PC1'] = pca.components_[0]
-    cols['PC2']= pca.components_[1]
+        cols = {}
+        cols['PC1'] = pca.components_[0]
+        cols['PC2']= pca.components_[1]
 
-    samplesQryStr = "MATCH (s:Sample) WHERE s.id IN " + tick_samples + " RETURN s"
+        samplesQryStr = "MATCH (s:Sample) WHERE s.id IN " + tick_samples + " RETURN s"
 
-    samples_rq_res = utils.cypher_call(samplesQryStr)
-    samples_df = utils.process_result_graph(samples_rq_res)
-    vals = []
+        samples_rq_res = utils.cypher_call(samplesQryStr)
+        samples_df = utils.process_result_graph(samples_rq_res)
+        vals = []
 
-    for index, row in samples_df.iterrows():
-        temp = {}
-        for key in row.keys().values:
-            temp[key] = row[key]
-        temp['PC1'] = cols['PC1'][index]
-        temp['PC2'] = cols['PC2'][index]
-        temp['sample_id'] = temp['id']
-        del temp['id']
-        vals.append(temp)
+        for index, row in samples_df.iterrows():
+            temp = {}
+            for key in row.keys().values:
+                temp[key] = row[key]
+            temp['PC1'] = cols['PC1'][index]
+            temp['PC2'] = cols['PC2'][index]
+            temp['sample_id'] = temp['id']
+            del temp['id']
+            vals.append(temp)
 
-    resRowsCols = {"data": vals}
+        result = {"data": vals}
 
-    variance_explained[0] = round(variance_explained[0]*100.0, 2)
-    variance_explained[1] = round(variance_explained[1]*100.0, 2)
-    resRowsCols['pca_variance_explained'] = variance_explained
+        variance_explained[0] = round(variance_explained[0]*100.0, 2)
+        variance_explained[1] = round(variance_explained[1]*100.0, 2)
+        result['pca_variance_explained'] = variance_explained
 
-    return resRowsCols
+    except:
+        error_info = sys.exc_info()
+        error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+
+    return result, error

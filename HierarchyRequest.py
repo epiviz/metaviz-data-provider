@@ -1,4 +1,5 @@
 import utils
+import sys
 
 """
 .. module:: HierarchyRequest
@@ -29,6 +30,8 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     root_node = root_node.replace('"', "")
 
     taxonomy = False
+    result = None
+    error = None
 
     if len(root_node) == 0 or root_node == "0-0":
         root_node = "0-0"
@@ -49,44 +52,48 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                  "ff.partition as partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, " \
                  "ff.nchildren as nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order " \
                  "ORDER by ff.depth, ff.leafIndex, ff.order"
+    try:
+        rq_res = utils.cypher_call(qryStr)
+        df = utils.process_result(rq_res)
 
-    rq_res = utils.cypher_call(qryStr)
-    df = utils.process_result(rq_res)
+        if len(df) > 0:
+            # convert columns to int
+            df['start'] = df['start'].astype(int)
+            df['end'] = df['end'].astype(int)
+            df['order'] = df['order'].astype(int)
+            df['leafIndex'] = df['leafIndex'].astype(int)
+            df['nchildren'] = df['nchildren'].astype(int)
+            df['nleaves'] = df['nleaves'].astype(int)
+            df['depth'] = df['depth'].astype(int)
+            df['depth'] = df['depth'].astype(int)
 
-    if len(df) > 0:
-        # convert columns to int
-        df['start'] = df['start'].astype(int)
-        df['end'] = df['end'].astype(int)
-        df['order'] = df['order'].astype(int)
-        df['leafIndex'] = df['leafIndex'].astype(int)
-        df['nchildren'] = df['nchildren'].astype(int)
-        df['nleaves'] = df['nleaves'].astype(int)
-        df['depth'] = df['depth'].astype(int)
-        df['depth'] = df['depth'].astype(int)
+            # restore current order, selection and levels from input params
+            for key in in_params_order.keys():
+                df.loc[df['id'] == key, 'order'] = in_params_order[key]
 
-        # restore current order, selection and levels from input params
-        for key in in_params_order.keys():
-            df.loc[df['id'] == key, 'order'] = in_params_order[key]
+            for key in in_params_selection.keys():
+                df.loc[df['id'] == key, 'selectionType'] = in_params_selection[key]
 
-        for key in in_params_selection.keys():
-            df.loc[df['id'] == key, 'selectionType'] = in_params_selection[key]
+            for key in in_params_selected_levels.keys():
+                df.loc[df['depth'] == int(key), 'selectionType'] = in_params_selected_levels[key]
 
-        for key in in_params_selected_levels.keys():
-            df.loc[df['depth'] == int(key), 'selectionType'] = in_params_selected_levels[key]
+            root = df.iloc[0]
+            other = df.loc[1:,]
 
-        root = df.iloc[0]
-        other = df.loc[1:,]
+            rootDict = row_to_dict(root)
+            result = df_to_tree(rootDict, other)
 
-        rootDict = row_to_dict(root)
-        result = df_to_tree(rootDict, other)
+            if taxonomy:
+                trq_res = utils.cypher_call(tQryStr)
+                tdf = utils.process_result(trq_res)
 
-        if taxonomy:
-            trq_res = utils.cypher_call(tQryStr)
-            tdf = utils.process_result(trq_res)
+                result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
-            result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
+    except:
+        error_info = sys.exc_info()
+        error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
 
-        return result
+    return (result, error)
 
 def row_to_dict(row):
     """
