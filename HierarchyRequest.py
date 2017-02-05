@@ -32,6 +32,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     taxonomy = False
     result = None
     error = None
+    response_status = 200
 
     if len(root_node) == 0 or root_node == "0-0":
         root_node = "0-0"
@@ -92,8 +93,9 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     except:
         error_info = sys.exc_info()
         error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+        response_status = 500
 
-    return (result, error)
+    return result, error, response_status
 
 def row_to_dict(row):
     """

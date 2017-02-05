@@ -60,11 +60,13 @@ def process_api():
 
     result = None
     errorStr = None
+    response_status = 200
 
     if utils.check_neo4j() != True:
         errorStr = "Neo4j is not running"
         reqId = request.values['id']
-        res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=500,
+        response_status = 500
+        res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=response_status,
                    mimetype="application/json")
         return res
 
@@ -75,7 +77,7 @@ def process_api():
         in_params_nodeId = request.values['params[nodeId]']
         in_params_depth = request.values['params[depth]']
         in_datasource = request.values['params[datasource]']
-        result,errorStr = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels,
+        result,errorStr, response_status = HierarchyRequest.get_data(in_params_selection, in_params_order, in_params_selectedLevels,
                                            in_params_nodeId, in_params_depth, in_datasource)
 
     elif in_params_method == "partitions":
@@ -85,6 +87,7 @@ def process_api():
             return PartitionsRequest.get_data(in_datasource)
         result = partition_cache_call(in_datasource)
         errorStr = None
+        response_status = 200
 
     elif in_params_method == "measurements":
         in_datasource = request.values['params[datasource]']
@@ -93,18 +96,19 @@ def process_api():
             return MeasurementsRequest.get_data(in_datasource)
         result = measurement_cache_call(in_datasource)
         errorStr = None
+        response_status = 200
 
     elif in_params_method == "pca":
         in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result, errorStr = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
+        result, errorStr, response_status = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
 
     elif in_params_method == "diversity":
         in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result, errorStr = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
+        result, errorStr, response_status = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
 
     elif in_params_method == "combined":
         in_datasource = request.values['params[datasource]']
@@ -114,7 +118,7 @@ def process_api():
         in_params_selection = eval(request.values['params[selection]'])
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
-        result, errorStr = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
+        result, errorStr, response_status = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
                                           in_params_selectedLevels, in_params_samples, in_datasource)
         errorStr = None
 
@@ -122,10 +126,10 @@ def process_api():
         in_param_datasource = request.values['params[datasource]']
         in_param_searchQuery = request.values['params[q]']
         in_param_maxResults = request.values['params[maxResults]']
-        result, errorStr = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
+        result, errorStr, response_status = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
 
     reqId = request.values['id']
-    res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=200,
+    res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=response_status,
                    mimetype="application/json")
     return res
 

@@ -33,6 +33,8 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
 
     result = None
     error = None
+    response_status = 200
+
     try:
         rq_res = utils.cypher_call(qryStr)
         df = utils.process_result(rq_res)
@@ -40,7 +42,8 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     except:
         error_info = sys.exc_info()
         error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
-        return result, error
+        response_status = 500
+        return result, error, response_status
 
     minSelectedLevel = int(df['depth'].values[0])
     if minSelectedLevel is None:
@@ -94,5 +97,6 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     except:
         error_info = sys.exc_info()
         error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+        response_status = 500
 
-    return result, error
+    return result, error, response_status

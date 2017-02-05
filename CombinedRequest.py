@@ -28,6 +28,7 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     tick_samples = in_params_samples.replace("\"", "\'")
     result = None
     error = None
+    response_status = 200
 
     # get the min selected Level if aggregated at multiple levels
     qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature)<-[:LEAF_OF]-(:Feature)<-[:PARENT_OF*]-(:Feature)<-[:DATASOURCE_OF]-(ds:Datasource {label: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
@@ -59,7 +60,8 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     except:
         error_info = sys.exc_info()
         error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
-        return result, error
+        response_status = 500
+        return result, error, response_status
 
     qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) " \
         "MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample)" \
@@ -130,5 +132,6 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
     except:
         error_info = sys.exc_info()
         error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+        response_status = 500
 
-    return result, error
+    return result, error, response_status
