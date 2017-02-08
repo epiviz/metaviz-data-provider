@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, redirect
 from flask_cache import Cache
 import ujson
 import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest
@@ -40,7 +40,9 @@ application.after_request(add_cors_headers)
 def process_redirect():
     """
     Send a request to the RedirectRequest class to lookup Metaviz workspace id of iHMP file id
+
     Args:
+
     Returns:
      res: Flask redirect containing Metaviz workspace
     """
@@ -58,7 +60,8 @@ def process_redirect():
         redirect_location = RedirectRequest.get_data(in_params_id)
 
     res = redirect(redirect_location, code=302)
-return res
+    return res
+
 
 # Route for POST, OPTIONS, and GET requests
 @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
@@ -93,6 +96,7 @@ def process_api():
         res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=response_status,
                    mimetype="application/json")
         return res
+
 
     if(in_params_method == "hierarchy"):
         in_params_order = eval(request.values['params[order]'])
@@ -144,7 +148,7 @@ def process_api():
         in_params_samples = request.values['params[measurements]']
         result, errorStr, response_status = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
                                           in_params_selectedLevels, in_params_samples, in_datasource)
-        errorStr = None
+
 
     elif in_params_method == "search":
         in_param_datasource = request.values['params[datasource]']
@@ -159,3 +163,4 @@ def process_api():
 
 if __name__ == '__main__':
     application.run(debug=True)
+

@@ -25,3 +25,4 @@ def get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults):
         response_status = 500
 
     return result, error, response_status
+

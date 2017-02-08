@@ -97,6 +97,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
 
     return result, error, response_status
 
+
 def row_to_dict(row):
     """
     Helper function to format the response.

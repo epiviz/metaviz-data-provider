@@ -4,6 +4,7 @@ import copy
 import math
 import sys
 
+
 """
 .. module:: DiversityRequest
    :synopsis: Query Neo4j Sample nodes and compute Diversity over selected level of Feature nodes
@@ -53,7 +54,6 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
         response_status = 500
         return result, error, response_status
-
 
     qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
         "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, " \
@@ -112,3 +112,4 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         response_status = 500
 
     return result, error, response_status
+

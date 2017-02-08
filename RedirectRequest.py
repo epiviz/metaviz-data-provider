@@ -11,6 +11,7 @@ def get_data(in_file_id):
     Returns the Metaviz workspace id of an iHMP file id
     Args:
      in_file_id: iHMP file id
+
     Returns:
      redirect_url: Metaviz URL for workspace
     """
@@ -21,4 +22,4 @@ def get_data(in_file_id):
 
     redirect_url = "http://metaviz.cbcb.umd.edu/?ws=" + ws_id
 
-return redirect_url
+    return redirect_url
