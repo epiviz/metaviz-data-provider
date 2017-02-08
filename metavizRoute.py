@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, Response
 from flask_cache import Cache
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest
 
 application = Flask(__name__)
 cache = Cache(application, config={'CACHE_TYPE': 'simple'})
@@ -35,6 +35,30 @@ def add_cors_headers(response):
 
 application.after_request(add_cors_headers)
 
+# Route for POST, OPTIONS, and GET requests
+@application.route('/api/ihmp_redirect/', methods = ['POST', 'OPTIONS', 'GET'])
+def process_redirect():
+    """
+    Send a request to the RedirectRequest class to lookup Metaviz workspace id of iHMP file id
+    Args:
+    Returns:
+     res: Flask redirect containing Metaviz workspace
+    """
+
+    # For OPTIONS request, return an emtpy response
+    if request.method == 'OPTIONS':
+        res = jsonify({})
+        res.headers['Access-Control-Allow-Origin'] = '*'
+        res.headers['Access-Control-Allow-Headers'] = '*'
+        return res
+
+    in_params_id = request.values['fid']
+
+    if(in_params_id != None):
+        redirect_location = RedirectRequest.get_data(in_params_id)
+
+    res = redirect(redirect_location, code=302)
+return res
 
 # Route for POST, OPTIONS, and GET requests
 @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
