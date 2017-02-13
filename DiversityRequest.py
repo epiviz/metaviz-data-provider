@@ -3,6 +3,7 @@ import pandas
 import copy
 import math
 import sys
+import numpy
 
 
 """
@@ -73,18 +74,19 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         sample_ids = list(set(forDiversityDF["s.id"]))
         if diversity_type == "shannon":
             for i in range(0, len(sample_ids)):
-                l = forDiversityMat.ix[:,i].get_values()
-                props = copy.deepcopy(l)
-                alphaDiversity = 0.0
-                totalSum = 0.0
-                for j in range(0, len(l)):
-                    totalSum = totalSum + l[j]
+                col_vals = forDiversityMat.ix[:,i].get_values()
+                props = list()
+                totalSum = col_vals.sum()
 
-                for j in range(0, len(l)):
-                    props[j] = l[j]/totalSum
+                for k in range(0, len(col_vals)):
+                    temp_prop = float(col_vals[k]/totalSum)
+                    if temp_prop != 0.0:
+                        props.append(float((temp_prop * math.log(temp_prop))))
+                    else:
+                        props.append(0.0)
 
-                for j in range(0, len(props)):
-                    alphaDiversity = alphaDiversity + (props[j] * math.log1p(props[j]))
+                nd_props = numpy.asarray(props, dtype=float)
+                alphaDiversity = -(nd_props.sum())
 
                 alphaDiversityVals.append(alphaDiversity)
                 cols[forDiversityMat.columns.values[i]] = alphaDiversity
