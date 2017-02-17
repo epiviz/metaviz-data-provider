@@ -46,7 +46,7 @@ def get_data(in_datasource):
             # tempCat = pd.Series(df[column], dtype="category")
             rowStat['type'] = 'Category'
             rowStat['count'] = df[column].count()
-            rowStat['value_counts'] = df[column].value_counts()
+            rowStat['value_counts'] = df[column].value_counts().to_dict()
 
         stats.append(rowStat)
 
@@ -67,6 +67,7 @@ def get_data(in_datasource):
     result = {"id": measurements, "name": measurements, "datasourceGroup": dsGroup, "datasourceId": dsId, "datasourceDescription": dsDescription,
               "defaultChartType": "", "type": "feature", "minValue": df2['minVal'][0], "maxValue": df2['maxVal'][0],
               "annotation": anno,
-              "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5", "taxonomy6","taxonomy7", "lineage"]}
+              "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5", "taxonomy6","taxonomy7", "lineage"],
+              'stats': stats}
 
     return result
