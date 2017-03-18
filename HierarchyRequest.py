@@ -85,6 +85,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             other = df.loc[1:,]
 
             rootDict = row_to_dict(root)
+            rootDict['lineageLabel'] = root['lineageLabel']
             result = df_to_tree(rootDict, other)
 
             if taxonomy:
