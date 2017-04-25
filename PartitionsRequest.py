@@ -26,6 +26,6 @@ def get_data(in_datasource):
     df = utils.process_result(rq_res)
 
     arr = []
-    arr.append([None, df['start'][0], df['end'][0]])
+    arr.append([in_datasource, df['start'][0], df['end'][0]])
 
     return arr
