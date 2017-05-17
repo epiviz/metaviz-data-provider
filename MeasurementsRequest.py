@@ -32,6 +32,7 @@ def get_data(in_datasource):
     df.fillna(0, inplace=True)
     dsGroup = []
     dsId = []
+    dsDescription = []
 
     for index, row in df.iterrows():
         temp = row['s']
@@ -40,13 +41,15 @@ def get_data(in_datasource):
         anno.append(temp)
         dsGroup.append(row['ds']['label'])
         dsId.append(row['ds']['label'])
+	dsDescription.append(row['ds']['description'])
+
 
     rowQryStr = "MATCH ()-[r]-() WHERE EXISTS(r.val) RETURN min(r.val) as minVal, max(r.val) as maxVal"
 
     rq_res2 = utils.cypher_call(rowQryStr)
     df2 = utils.process_result(rq_res2)
 
-    result = {"id": measurements, "name": measurements, "datasourceGroup": dsGroup, "datasourceId": dsId,
+    result = {"id": measurements, "name": measurements, "datasourceGroup": dsGroup, "datasourceId": dsId, "datasourceDescription": dsDescription,
               "defaultChartType": "", "type": "feature", "minValue": df2['minVal'][0], "maxValue": df2['maxVal'][0],
               "annotation": anno,
               "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5", "taxonomy6","taxonomy7", "lineage"]}

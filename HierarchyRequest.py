@@ -34,8 +34,12 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     error = None
     response_status = 200
 
-    if len(root_node) == 0 or root_node == "0-0":
+    print "inside hierarchy"
+
+    if len(root_node) == 0 or root_node == "0-0" or root_node == "0-1":
         root_node = "0-0"
+	    if in_datasource == "igs_biom_redirect":
+	        root_node = "0-1"
         qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
                  "with collect(f2) + f as nodesFeat unwind nodesFeat as ff " \
                  "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
@@ -68,7 +72,6 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             df['leafIndex'] = df['leafIndex'].astype(int)
             df['nchildren'] = df['nchildren'].astype(int)
             df['nleaves'] = df['nleaves'].astype(int)
-            df['depth'] = df['depth'].astype(int)
             df['depth'] = df['depth'].astype(int)
 
             # restore current order, selection and levels from input params
