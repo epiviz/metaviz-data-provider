@@ -33,7 +33,6 @@ def get_data(in_datasource):
     dsGroup = []
     dsId = []
     dsDescription = []
-      
     for index, row in df.iterrows():
         temp = row['s']
         measurements.append(temp['id'])
@@ -41,7 +40,7 @@ def get_data(in_datasource):
         anno.append(temp)
         dsGroup.append(row['ds']['label'])
         dsId.append(row['ds']['label'])
-	dsDescription.append(row['ds']['description'])
+        dsDescription.append(row['ds']['description'])
     rowQryStr = "MATCH ()-[r]-() WHERE EXISTS(r.val) RETURN min(r.val) as minVal, max(r.val) as maxVal"
 
     rq_res2 = utils.cypher_call(rowQryStr)
