@@ -26,8 +26,9 @@ def get_data(workspace_id, query_string):
 	else:
 		try:
 			rq_res = utils.workspace_request(workspace_id, query_string)
-			print(rq_res)
-			return rq_res
+			jsResp = ujson.loads(rq_res.text)
+			print(jsResp['data'][0]['content'])
+			return jsResp['data'][0]['content']
 		except:
 			error_info = sys.exc_info()
 			error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])

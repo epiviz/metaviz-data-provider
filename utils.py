@@ -77,6 +77,28 @@ def cypher_call(query):
                   auth=(credential.neo4j_username, credential.neo4j_password))
     return rq_res
 
+def workspace_request(wid, query):
+    """
+    Route query to the neo4j REST api.  This showed the best performance compared to py2neo and python neo4j driver
+
+    Args:
+     query: Cypher query to send to Neo4j
+
+    Returns:
+     rq_res: Cypher query response
+    """
+    # headers = {'Content-Type': 'application/json'}
+
+    query_url = "http://metaviz.cbcb.umd.edu/data/main.php?requestId=8&version=4&action=getWorkspaces&ws=" + wid
+    if query is None or query == "":
+	    query_url = query_url + "&q="
+    else:
+	    query_url = query_url + "&q=" + query
+
+    print(query_url)
+    rq_res = rqs.get(url=query_url)
+    return rq_res
+
 def check_neo4j():
     """
     On start of application, checks that neo4j is running locally
@@ -94,24 +116,3 @@ def check_neo4j():
         return False
 
     return True
-
-def workspace_request(wid, query):
-    """
-    Route query to the neo4j REST api.  This showed the best performance compared to py2neo and python neo4j driver
-
-    Args:
-     query: Cypher query to send to Neo4j
-
-    Returns:
-     rq_res: Cypher query response
-    """
-    # headers = {'Content-Type': 'application/json'}
-
-    query_url = "http://metaviz.cbcb.umd.edu/data/main.php?requestId=8&version=4&action=getWorkspaces&ws= " + wid
-    if query is None or query == "":
-	    query_url = query_url + "&q="
-    else:
-	    query_url = query_url + "&q=" + query
-
-    rq_res = rqs.get(url=query_url)
-    return rq_res
