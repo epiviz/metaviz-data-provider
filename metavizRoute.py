@@ -38,16 +38,15 @@ application.after_request(add_cors_headers)
 @application.route('/workspace/', methods = ['POST', 'OPTIONS', 'GET'])
 @application.route('/workspace', methods = ['POST', 'OPTIONS', 'GET'])
 def workspace_api():
-    print("getWorkspace")
     workspaceId = request.args.get('ws')
-    print workspaceId
     queryString = request.args.get('q')
-    print queryString
-    res = WorkspaceRequest.get_data(workspaceId, queryString)
     reqId = int(request.args.get('requestId'))
-    res = Response(response=ujson.dumps({"requestId": reqId, "type": "response", "data": [{"content": res, "id": None, "id_v1": None, "name": "IHMP_ibd_1", "version": "4"}]}), status=200, mimetype="application/json")
+    if workspaceId == "" and queryString == "" :
+        res = Response(response=ujson.dumps({"requestId": reqId, "type": "response", "data": []}), status=200, mimetype="application/json")
+    else :
+        res = WorkspaceRequest.get_data(workspaceId, queryString)
+        res = Response(response=ujson.dumps({"requestId": reqId, "type": "response", "data": [{"content": res, "id": None, "id_v1": None, "name": "IHMP_ibd_1", "version": "4"}]}), status=200, mimetype="application/json")
     return res
-
 
 # Route for POST, OPTIONS, and GET requests
 @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
