@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, Response
 from flask_cache import Cache
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest, WorkspaceRequest
 
 application = Flask(__name__)
 cache = Cache(application, config={'CACHE_TYPE': 'simple'})
@@ -34,6 +34,20 @@ def add_cors_headers(response):
     return response
 
 application.after_request(add_cors_headers)
+
+@application.route('/workspace/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/workspace', methods = ['POST', 'OPTIONS', 'GET'])
+def workspace_api():
+    print("getWorkspace")
+    workspaceId = request.args.get('ws')
+    print workspaceId
+    queryString = request.args.get('q')
+    print queryString
+    res = WorkspaceRequest.get_data(workspaceId, queryString)
+    reqId = int(request.args.get('requestId'))
+    res = Response(response=ujson.dumps({"requestId": reqId, "type": "response", "data": [{"content": res, "id": None, "id_v1": None, "name": "IHMP_ibd_1", "version": "4"}]}), status=200, mimetype="application/json")
+    return res
+
 
 # Route for POST, OPTIONS, and GET requests
 @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
