@@ -134,5 +134,5 @@ def process_api():
     return res
 
 if __name__ == '__main__':
-    application.run(debug=True)
+    application.run()
 
