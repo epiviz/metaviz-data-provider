@@ -156,7 +156,7 @@ def df_to_tree(root, df):
 
     # children.sort_values('order')
     # for old version of pandas
-    children.sort('order')
+    children.sort_values('order')
 
     for index,row in children.iterrows():
         childDict = row_to_dict(row)
