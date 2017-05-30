@@ -34,8 +34,6 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
     error = None
     response_status = 200
 
-    print "inside hierarchy"
-
     if len(root_node) == 0 or root_node == "0-0" or root_node == "0-1":
         root_node = "0-0"
 	if in_datasource == "igs_biom_redirect":
