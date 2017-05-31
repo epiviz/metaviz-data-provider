@@ -53,7 +53,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
 
-    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
+    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(" + str(minSelectedLevel) + ")) " \
          "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label " \
          "as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
          "f.lineageLabel as lineageLabel, f.order as order"
@@ -72,7 +72,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         cols['PC1'] = pca.components_[0]
         cols['PC2']= pca.components_[1]
 
-        samplesQryStr = "MATCH (s:Sample) WHERE s.id IN " + tick_samples + " RETURN s"
+        samplesQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE s.id IN " + tick_samples + " RETURN DISTINCT s"
 
         samples_rq_res = utils.cypher_call(samplesQryStr)
         samples_df = utils.process_result_graph(samples_rq_res)
