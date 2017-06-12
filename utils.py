@@ -1,7 +1,7 @@
 import credential
-import requests as rqs
 import ujson
 import pandas
+from neo4j.v1 import GraphDatabase
 
 """
 .. module:: utils
@@ -21,17 +21,7 @@ def process_result(result):
     Returns:
      df: dataframe of cypher query response
     """
-    rows = []
-
-    jsResp = ujson.loads(result.text)
-
-    for row in jsResp["results"][0]["data"]:
-        rows.append(row['row'])
-
-    df = pandas.DataFrame()
-
-    if len(rows) > 0:
-        df = pandas.DataFrame(rows, columns=jsResp['results'][0]['columns'])
+    df = pandas.DataFrame([r.values() for r in result], columns=result.keys())
 
     return df
 
@@ -45,17 +35,14 @@ def process_result_graph(result):
     Returns:
      df: dataframe of cypher query response
     """
-    rows = []
+    first_row = result.records().next()['s']
 
-    jsResp = ujson.loads(result.text)
+    first_keys = first_row.keys()
+    first_vals = first_row.values()
 
-    for row in jsResp["results"][0]["data"]:
-        rows.append(row['row'][0])
-
-    df = pandas.DataFrame()
-
-    if len(rows) > 0:
-        df = pandas.DataFrame(rows)
+    first_df = pandas.DataFrame([first_vals], columns = first_keys)
+    df = pandas.DataFrame([r['s'].values() for r in result], columns = first_keys)
+    df = df.append(first_df)
 
     return df
 
@@ -70,12 +57,11 @@ def cypher_call(query):
     Returns:
      rq_res: Cypher query response
     """
-    headers = {'Content-Type': 'application/json'}
-    data = {'statements': [{'statement': query, 'includeStats': False}]}
+    
+    driver = GraphDatabase.driver("bolt://localhost", auth=(credential.neo4j_username, credential.neo4j_password))
+    result = driver.session().run(query)
 
-    rq_res = rqs.post(url='http://localhost:7474/db/data/transaction/commit', headers=headers, data=ujson.dumps(data),
-                  auth=(credential.neo4j_username, credential.neo4j_password))
-    return rq_res
+    return result
 
 def workspace_request(wid, query):
     """
