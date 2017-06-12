@@ -7,3 +7,4 @@ ujson
 scipy
 sklearn
 logging
+neo4j-driver
