@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, Response
 from flask_cache import Cache
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest, WorkspaceRequest
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest, WorkspaceRequest, FeatureRequest
 
 application = Flask(__name__)
 cache = Cache(application, config={'CACHE_TYPE': 'simple'})
@@ -133,6 +133,12 @@ def process_api():
         in_params_samples = request.values['params[measurements]']
         result, errorStr, response_status = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
                                           in_params_selectedLevels, in_params_samples, in_datasource)
+
+    elif in_params_method == "featureData":
+        in_datasource = request.values['params[datasource]']
+        in_params_feature = request.values['params[feature]']
+        in_params_samples = request.values['params[measurements]']
+        result, errorStr, response_status = FeatureRequest.get_data(in_params_feature, in_params_samples, in_datasource)
 
 
     elif in_params_method == "search":
