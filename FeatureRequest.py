@@ -26,8 +26,6 @@ def get_data(in_params_feature, in_params_samples, in_datasource):
         "RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, " \
         "f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
 
-    print qryStr
-
     try:
         rq_res = utils.cypher_call(qryStr)
         df = utils.process_result(rq_res)

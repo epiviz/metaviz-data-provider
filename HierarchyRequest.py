@@ -1,5 +1,6 @@
 import utils
 import sys
+import pandas
 
 """
 .. module:: HierarchyRequest
@@ -61,6 +62,9 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
         tQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth" + " UNION " + "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"        
         taxonomy = True
     try:
+
+        print qryStr
+
         rq_res = utils.cypher_call(qryStr)
         df = utils.process_result(rq_res)
 
@@ -74,6 +78,13 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             df['nleaves'] = df['nleaves'].astype(int)
             df['depth'] = df['depth'].astype(int)
 
+            trq_res = utils.cypher_call(tQryStr)
+            tdf = utils.process_result(trq_res)
+
+            last_depth = int(tdf['depth'].values.tolist()[-1])
+            last_taxonomy = tdf['taxonomy'].values.tolist()[-1]
+            last_taxa_minus = tdf['taxonomy'].values.tolist()[-2]
+
             # restore current order, selection and levels from input params
             for key in in_params_order.keys():
                 df.loc[df['id'] == key, 'order'] = in_params_order[key]
@@ -84,6 +95,20 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             for key in in_params_selected_levels.keys():
                 df.loc[df['depth'] == int(key), 'selectionType'] = in_params_selected_levels[key]
 
+            df_otu = df[(df['depth'] == last_depth)]
+            if len(df_otu) > 0:
+                otu_nodes = df[(df['depth'] == last_depth - 1)]
+                otu_nodes["depth"].replace(last_depth -1, last_depth, inplace=True)
+                otu_nodes["taxonomy"].replace(last_taxa_minus, last_taxonomy, inplace=True)
+                otu_nodes["nleaves"] = 1
+                for index, row in otu_nodes.iterrows():
+                    otu_nodes.at[index, 'label'] = "(OTU - " + str(row["nchildren"]) + ")" + row['label']
+                    otu_nodes.at[index, 'parentId'] = row['id']
+                    otu_nodes.at[index, 'id'] = str(last_depth) + "-" + row['id']
+                otu_nodes["nchildren"] = 0
+                df = df[~(df['depth'] == last_depth)]
+                df = pandas.concat([df, otu_nodes])
+
             root = df.iloc[0]
             other = df.loc[1:,]
 
@@ -92,9 +117,6 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             result = df_to_tree(rootDict, other)
 
             if taxonomy:
-                trq_res = utils.cypher_call(tQryStr)
-                tdf = utils.process_result(trq_res)
-
                 result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
     except:
