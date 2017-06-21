@@ -174,7 +174,7 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                     otu_nodes["taxonomy"].replace(last_taxa_minus, last_taxonomy, inplace=True)
                     otu_nodes["nleaves"] = 1
                     for index, row in otu_nodes.iterrows():
-                        otu_nodes.at[index, 'label'] = row['label'] + ", " + str(row["nchildren"]) + " OUTs" 
+                        otu_nodes.at[index, 'label'] = row['label'] + ", " + str(row["nchildren"]) + " OTUs" 
                         otu_nodes.at[index, 'parentId'] = row['id']
                         otu_nodes.at[index, 'id'] = str(last_depth) + "-" + row['id']
                     otu_nodes["nchildren"] = 0
