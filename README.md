@@ -1,4 +1,4 @@
-# neo4j-data-provider
+# metaviz-data-provider
 
 # Description
 
