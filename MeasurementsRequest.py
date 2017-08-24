@@ -32,6 +32,24 @@ def get_data(in_datasource):
     df.fillna(0, inplace=True)
     dsGroup = []
     dsId = []
+    stats = []
+
+    for column in df:
+        rowStat = {}
+        rowStat['field'] = column
+        if df[column].dtype == np.float64 or df[column].dtype == np.int64:
+            rowStat['type'] = 'value'
+            rowStat['min'] = df[column].min()
+            rowStat['max'] = df[column].max()
+            rowStat['count'] = df[column].count()
+        else:
+            # tempCat = pd.Series(df[column], dtype="category")
+            rowStat['type'] = 'Category'
+            rowStat['count'] = df[column].count()
+            rowStat['value_counts'] = df[column].value_counts()
+
+        stats.append(rowStat)
+
     dsDescription = []
     for index, row in df.iterrows():
         temp = row['s']
