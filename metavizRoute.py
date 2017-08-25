@@ -147,7 +147,7 @@ def process_api():
         in_param_maxResults = request.values['params[maxResults]']
         result, errorStr, response_status = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
 
-    reqId = request.values['id']
+    reqId = int(request.values['id'])
     res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=response_status,
                    mimetype="application/json")
     return res
