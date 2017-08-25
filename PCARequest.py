@@ -1,6 +1,7 @@
 import utils
 import pandas
 import sys
+import numpy
 from sklearn.decomposition import PCA
 
 """
@@ -63,7 +64,8 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         df = utils.process_result(rq_res)
 
         forPCAmat = pandas.pivot_table(df, index=["label"], columns="s.id", values="agg", fill_value=0)
-    
+    	forPCAmat = numpy.log2(forPCAmat + 1)
+
         pca = PCA(n_components = 2)
         pca.fit(forPCAmat)
         variance_explained = pca.explained_variance_ratio_
