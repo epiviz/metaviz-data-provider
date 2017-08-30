@@ -4,7 +4,7 @@ import ujson
 import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest, WorkspaceRequest, FeatureRequest
 
 application = Flask(__name__)
-cache = Cache(application, config={'CACHE_TYPE': 'simple'})
+cache = Cache(application, config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 0})
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 """
