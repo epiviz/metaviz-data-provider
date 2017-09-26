@@ -58,6 +58,8 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
         
         tQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth" + " UNION " + "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
         taxonomy = True
+        nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:PARENT_OF*0..3]->(f2:Feature) " \
+                              "return f2.depth as level, count(*) as nodesPerLevel ORDER BY level"
 
         try:
             rq_res = utils.cypher_call(qryStr)
@@ -100,6 +102,11 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                 if taxonomy:
                     result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
+                npl_res = utils.cypher_call(nodesPerLevelQryStr)
+                npl_df = utils.process_result(npl_res)
+
+                result['nodesPerLevel'] = npl_df['nodesPerLevel'].values.tolist()
+
         except:
             error_info = sys.exc_info()
             error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
@@ -124,6 +131,9 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
 
             tQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth" + " UNION " + "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"
             taxonomy = True
+
+            nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+                                  "return f2.depth as level, count(*) as nodesPerLevel ORDER BY level"
         else:
             qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
                     "OPTIONAL MATCH (f)<-[:PARENT_OF]-(fParent:Feature) with collect(f2) + f + fParent as nodesFeat " \
@@ -135,6 +145,9 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
             
             tQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth" + " UNION " + "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"        
             taxonomy = True
+
+            nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature {id:'" + root_node + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+                                  "return f2.depth as level, count(*) as nodesPerLevel ORDER BY level"
 
         try:
             rq_res = utils.cypher_call(qryStr)
@@ -191,6 +204,11 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                 if taxonomy:
                     result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
+                npl_res = utils.cypher_call(nodesPerLevelQryStr)
+                npl_df = utils.process_result(npl_res)
+
+                result['nodesPerLevel'] = npl_df['nodesPerLevel'].values.tolist()
+
         except:
             error_info = sys.exc_info()
             error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
@@ -210,6 +228,8 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
 
         tQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth" + " UNION " + "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) RETURN DISTINCT f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth"        
         taxonomy = True
+        nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature {id:'" + otu_parent_id + "'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+                              "return f2.depth as level, count(*) as nodesPerLevel ORDER BY level"
 
         try:
             rq_res = utils.cypher_call(qryStr)
@@ -283,6 +303,11 @@ def get_data(in_params_selection, in_params_order, in_params_selected_levels, in
                 if taxonomy:
                     result['rootTaxonomies'] = tdf['taxonomy'].values.tolist()
 
+                npl_res = utils.cypher_call(nodesPerLevelQryStr)
+                npl_df = utils.process_result(npl_res)
+
+                result['nodesPerLevel'] = npl_df['nodesPerLevel'].values.tolist()
+                
         except:
             error_info = sys.exc_info()
             error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
