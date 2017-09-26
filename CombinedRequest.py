@@ -65,13 +65,39 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         return result, error, response_status
 
 
-    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) " \
-        "MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample)" \
-        "USING INDEX s:Sample(id) WHERE (f.depth=" + str(minSelectedLevel) + " OR f.id IN " + selNodes + ") AND " \
-        "(f.start >= " + in_params_start + " AND " \
-        "f.end <= " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg " \
-        "RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, " \
-        "f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
+    markerGeneOrWgs = ""
+
+    # get the min selected Level if aggregated at multiple levels
+    markerGeneOrWgsQyrStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) RETURN ds.sequencing_type as sequencing_type"
+
+    try:
+        rq_res = utils.cypher_call(markerGeneOrWgsQyrStr)
+        df = utils.process_result(rq_res)
+        markerGeneOrWgs = df['sequencing_type'].values[0]
+
+    except:
+        error_info = sys.exc_info()
+        error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+        response_status = 500
+        return result, error, response_status
+
+
+    if markerGeneOrWgs == "wgs":
+        qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) " \
+            "MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)<-[v:COUNT]-(s:Sample)" \
+            "USING INDEX s:Sample(id) WHERE (f.depth=" + str(minSelectedLevel) + " OR f.id IN " + selNodes + ") AND " \
+            "(f.start >= " + in_params_start + " AND " \
+            "f.end <= " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, v.val as agg " \
+            "RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, " \
+            "f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
+    else:
+        qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) " \
+                 "MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample)" \
+                 "USING INDEX s:Sample(id) WHERE (f.depth=" + str(minSelectedLevel) + " OR f.id IN " + selNodes + ") AND " \
+                 "(f.start >= " + in_params_start + " AND " \
+                 "f.end <= " + in_params_end + ") AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg " \
+                 "RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, " \
+                 "f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
 
     try:
         rq_res = utils.cypher_call(qryStr)
