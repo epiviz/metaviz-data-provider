@@ -67,7 +67,6 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
 
     markerGeneOrWgs = ""
 
-    # get the min selected Level if aggregated at multiple levels
     markerGeneOrWgsQyrStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) RETURN ds.sequencing_type as sequencing_type"
 
     try:

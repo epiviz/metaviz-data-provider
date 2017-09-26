@@ -54,7 +54,29 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
 
-    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(" + str(minSelectedLevel) + ")) " \
+    markerGeneOrWgs = ""
+
+    markerGeneOrWgsQyrStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) RETURN ds.sequencing_type as sequencing_type"
+
+    try:
+        rq_res = utils.cypher_call(markerGeneOrWgsQyrStr)
+        df = utils.process_result(rq_res)
+        markerGeneOrWgs = df['sequencing_type'].values[0]
+
+    except:
+        error_info = sys.exc_info()
+        error = str(error_info[0]) + " " + str(error_info[1]) + " " + str(error_info[2])
+        response_status = 500
+        return result, error, response_status
+
+
+    if markerGeneOrWgs == "wgs":
+        qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(" + str(minSelectedLevel) + ")) " \
+         "AND s.id IN " + tick_samples + " with distinct f, s, v.val as agg RETURN distinct agg, s.id, f.label " \
+         "as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
+         "f.lineageLabel as lineageLabel, f.order as order"
+    else:
+        qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(" + str(minSelectedLevel) + ")) " \
          "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label " \
          "as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
          "f.lineageLabel as lineageLabel, f.order as order"
