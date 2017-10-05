@@ -102,7 +102,14 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         rq_res = utils.cypher_call(qryStr)
         df = utils.process_result(rq_res)
 
-        if len(df) > 0:
+        root_is_present = True
+        for key in in_params_selection.keys():
+            lKey = key.split('-')
+            if int(lKey[0]) <= minSelectedLevel:
+                if in_params_selection[key] == 0 and df.shape == df[df['lineage'].str.contains(key)].shape:
+                    root_is_present = False
+
+        if len(df) > 0 and root_is_present:
             # change column type
             df['index'] = df['index'].astype(int)
             df['start'] = df['start'].astype(int)
