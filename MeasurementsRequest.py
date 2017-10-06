@@ -33,23 +33,9 @@ def get_data(in_datasource):
     df.fillna(0, inplace=True)
     dsGroup = []
     dsId = []
-    # stats = []
-
-    # for column in df:
-    #     rowStat = {}
-    #     rowStat['field'] = column
-    #     if df[column].dtype == np.float64 or df[column].dtype == np.int64:
-    #         rowStat['type'] = 'value'
-    #         rowStat['min'] = df[column].min()
-    #         rowStat['max'] = df[column].max()
-    #         rowStat['count'] = df[column].count()
-    #     else:
-    #         rowStat['type'] = 'Category'
-    #         rowStat['count'] = df[column].count()
-    #         rowStat['value_counts'] = df[column].value_counts().to_dict()
-    #     stats.append(rowStat)
 
     dsDescription = []
+    dsSequencingType = []
     for index, row in df.iterrows():
         temp = row['s']
         measurements.append(temp['id'])
@@ -58,6 +44,7 @@ def get_data(in_datasource):
         dsGroup.append(row['ds']['label'])
         dsId.append(row['ds']['label'])
         dsDescription.append(row['ds']['description'])
+        dsSequencingType.append(row['ds']['sequencingType'])
     rowQryStr = "MATCH ()-[r]-() WHERE EXISTS(r.val) RETURN min(r.val) as minVal, max(r.val) as maxVal"
 
     rq_res2 = utils.cypher_call(rowQryStr)
@@ -66,8 +53,8 @@ def get_data(in_datasource):
     result = {"id": measurements, "name": measurements, "datasourceGroup": dsGroup, "datasourceId": dsId, "datasourceDescription": dsDescription,
               "defaultChartType": "", "type": "feature", "minValue": df2['minVal'][0], "maxValue": df2['maxVal'][0],
               "annotation": anno,
-              "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5", "taxonomy6","taxonomy7", "lineage"]
-              #'stats': stats
+              "metadata": ["label", "id", "taxonomy1", "taxonomy2", "taxonomy3", "taxonomy4", "taxonomy5", "taxonomy6","taxonomy7", "lineage"],
+              "sequencingType": dsSequencingType
              }
 
     return result
