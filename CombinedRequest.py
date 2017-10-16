@@ -128,6 +128,9 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
                         df = df[~df['lineage'].str.contains(key)]
                     elif in_params_selection[key] == 2:
                         df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
+                    elif in_params_selection[key] == 3:
+                        # propagated nodes to ignore!
+                        df = df[~df['lineage'].str.contains(key)]
 
             # create a pivot_table where columns are samples and rows are features
             # for pandas > 0.17
