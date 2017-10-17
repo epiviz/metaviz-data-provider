@@ -53,6 +53,15 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
             if in_params_selection[node] == 2:
                 selNodes += "'" +  node + "',"
                 selFlag = 1
+            if in_params_selection[node] == 1:
+                childQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(fParent:Feature {id: '" + node + "'})-[:PARENT_OF]->(f:Feature) RETURN f.id as id"
+                child_rq_res = utils.cypher_call(childQryStr)
+                child_df = utils.process_result(child_rq_res)
+                children_ids = child_df['id'].values
+                for child_node in children_ids:
+                    selNodes += "'" + child_node + "',"
+                    in_params_selection[child_node] = 2
+                    selFlag = 1
 
         if selFlag == 1:
             selNodes = selNodes[:-1]
@@ -129,8 +138,9 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
 
             for key in in_params_selection.keys():
                 if in_params_selection[key] == 2:
-                   node_lineage = df[df['id'].str.contains(key)]['lineage'].head(1).values[0].split(",")
-                   for i in range(minSelectedLevel, len(node_lineage)-1):
+                   if df[df['id'].str.contains(key)].shape[0] > 0:
+                    node_lineage = df[df['id'].str.contains(key)]['lineage'].head(1).values[0].split(",")
+                    for i in range(minSelectedLevel, len(node_lineage)-1):
                        df = df[~df['id'].str.contains(str(node_lineage[i]))]
 
             # create a pivot_table where columns are samples and rows are features
