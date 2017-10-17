@@ -121,16 +121,17 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
                 df.loc[df['id'] == key, 'order'] = in_params_order[key]
 
             for key in in_params_selection.keys():
-                lKey = key.split('-')
-                if int(lKey[0]) <= minSelectedLevel:
-                    if in_params_selection[key] == 0:
-                        # user selected nodes to ignore!
-                        df = df[~df['lineage'].str.contains(key)]
-                    elif in_params_selection[key] == 2:
-                        df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
-                    elif in_params_selection[key] == 3:
-                        # propagated nodes to ignore!
-                        df = df[~df['lineage'].str.contains(key)]
+                if in_params_selection[key] == 0:
+                   # user selected nodes to ignore!
+                   df = df[~df['lineage'].str.contains(key)]
+                elif in_params_selection[key] == 2:
+                   df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
+
+            for key in in_params_selection.keys():
+                if in_params_selection[key] == 2:
+                   node_lineage = df[df['id'].str.contains(key)]['lineage'].head(1).values[0].split(",")
+                   for i in range(minSelectedLevel, len(node_lineage)-1):
+                       df = df[~df['id'].str.contains(str(node_lineage[i]))]
 
             # create a pivot_table where columns are samples and rows are features
             # for pandas > 0.17
