@@ -59,9 +59,10 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
                 child_df = utils.process_result(child_rq_res)
                 children_ids = child_df['id'].values
                 for child_node in children_ids:
-                    selNodes += "'" + child_node + "',"
-                    in_params_selection[child_node] = 2
-                    selFlag = 1
+                    if child_node not in in_params_selection.keys():
+                        selNodes += "'" + child_node + "',"
+                        in_params_selection[child_node] = 2
+                        selFlag = 1
 
         if selFlag == 1:
             selNodes = selNodes[:-1]
@@ -132,7 +133,7 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
             for key in in_params_selection.keys():
                 if in_params_selection[key] == 0:
                    # user selected nodes to ignore!
-                   df = df[~df['lineage'].str.contains(key)]
+                   df = df[~(df['lineage'].str.contains(key))]
                 elif in_params_selection[key] == 2:
                    df = df[~(df['lineage'].str.contains(key) & ~df['id'].str.contains(key))]
 
