@@ -73,10 +73,10 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
                         in_params_selection[child_node] = 2
                         selFlag = 1
 
-            if in_params_selection[node] == 2:
+            elif in_params_selection[node] == 2:
                 selNodes += "'" +  node + "',"
                 selFlag = 1
-            if in_params_selection[node] == 1:
+            elif in_params_selection[node] == 1:
                 childQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(fParent:Feature {id: '" + node + "'})-[:PARENT_OF]->(f:Feature) RETURN f.id as id"
                 child_rq_res = utils.cypher_call(childQryStr)
                 child_df = utils.process_result(child_rq_res)
