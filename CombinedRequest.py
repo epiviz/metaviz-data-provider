@@ -50,6 +50,29 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         selNodes = "["
         selFlag = 0
         for node in in_params_selection.keys():
+            if "_" in node:
+                # its an OTU group node
+                group_nodes = node.split("_")
+                for gNode in group_nodes:
+                    if gNode not in in_params_selection.keys():
+                        in_params_selection[gNode] = in_params_selection[node]
+                        selNodes += "'" + gNode + "',"
+                        selFlag = 1
+            elif len(node.split("-")) > 2:
+                # its an OTU grouped node. 
+                # apply selection to every node in this group
+                node_split = node.split("-")
+                sNode = node_split[1] + "-" + node_split[2]
+                childQryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(fParent:Feature {id: '" + sNode + "'})-[:PARENT_OF]->(f:Feature) RETURN f.id as id"
+                child_rq_res = utils.cypher_call(childQryStr)
+                child_df = utils.process_result(child_rq_res)
+                children_ids = child_df['id'].values
+                for child_node in children_ids:
+                    if child_node not in in_params_selection.keys():
+                        selNodes += "'" + child_node + "',"
+                        in_params_selection[child_node] = 2
+                        selFlag = 1
+
             if in_params_selection[node] == 2:
                 selNodes += "'" +  node + "',"
                 selFlag = 1
@@ -74,9 +97,7 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         response_status = 500
         return result, error, response_status
 
-
     markerGeneOrWgs = ""
-
     markerGeneOrWgsQyrStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'}) RETURN ds.sequencing_type as sequencing_type"
 
     try:
