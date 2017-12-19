@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, Response, redirect
 from flask_cache import Cache
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest, WorkspaceRequest, FeatureRequest
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest, RedirectRequest, WorkspaceRequest, FeatureRequest, PCoARequest
 
 application = Flask(__name__)
 cache = Cache(application, config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 0})
@@ -143,6 +143,12 @@ def process_api():
         in_params_samples = request.values['params[measurements]']
         result, errorStr, response_status = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
 
+    elif in_params_method == "pcoa":
+        in_datasource = request.values['params[datasource]']
+        in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
+        in_params_samples = request.values['params[measurements]']
+        result, errorStr, response_status = PCoARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
+
     elif in_params_method == "diversity":
         in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
@@ -165,7 +171,6 @@ def process_api():
         in_params_feature = request.values['params[feature]']
         in_params_samples = request.values['params[measurements]']
         result, errorStr, response_status = FeatureRequest.get_data(in_params_feature, in_params_samples, in_datasource)
-
 
     elif in_params_method == "search":
         in_param_datasource = request.values['params[datasource]']
