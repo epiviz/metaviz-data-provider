@@ -1,7 +1,7 @@
-import credential
 import requests as rqs
 import ujson
 import pandas
+from config import preset_configs
 
 """
 .. module:: utils
@@ -73,8 +73,8 @@ def cypher_call(query):
     headers = {'Content-Type': 'application/json'}
     data = {'statements': [{'statement': query, 'includeStats': False}]}
 
-    rq_res = rqs.post(url='http://localhost:7474/db/data/transaction/commit', headers=headers, data=ujson.dumps(data),
-                  auth=(credential.neo4j_username, credential.neo4j_password))
+    rq_res = rqs.post(url=preset_configs.NEO4J_TRANSACTIONS_URL, headers=headers, data=ujson.dumps(data),
+                  auth=(preset_configs.NEO4J_USER, preset_configs.NEO4J_PASSWORD))
     return rq_res
 
 def check_neo4j():
@@ -88,8 +88,8 @@ def check_neo4j():
         none
     """
     try:
-        rq_res = rqs.get(url='http://localhost:7474/db/data',
-                         auth=(credential.neo4j_username, credential.neo4j_password))
+        rq_res = rqs.get(url=preset_configs.NEO4J_DB_URL,
+                         auth=(preset_configs.NEO4J_USER, preset_configs.NEO4J_PASSWORD))
     except rqs.exceptions.ConnectionError as err:
         return False
 
@@ -107,12 +107,35 @@ def workspace_request(wid, query):
     """
     # headers = {'Content-Type': 'application/json'}
 
-    query_url = "http://metaviz.cbcb.umd.edu/data/main.php?requestId=8&version=4&action=getWorkspaces&ws=" + wid
+    query_url = preset_configs.METAVIZ_WORKSPACE_URL + wid
+
     if query is None or query == "":
-	    query_url = query_url + "&q="
+        query_url = query_url + "&q="
     else:
-	    query_url = query_url + "&q=" + query
+        query_url = query_url + "&q=" + query
 
     print(query_url)
     rq_res = rqs.get(url=query_url)
     return rq_res
+
+def find_min_level(datasource_param, selectedLevels_param):
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature)<-[:LEAF_OF]-(:Feature)<-[:PARENT_OF*]-(:Feature)<-" \
+             "[:DATASOURCE_OF]-(ds:Datasource {label: '%s'}) " \
+             "RETURN f.depth as depth  LIMIT 1" % datasource_param
+
+    rq_res = cypher_call(qryStr)
+    df = process_result(rq_res)
+
+
+    minSelectedLevel = int(df['depth'].values[0])
+    if minSelectedLevel is None:
+        minSelectedLevel = 6
+
+    selectedLevelsDict = selectedLevels_param
+
+    if (hasattr(selectedLevelsDict, "keys")):
+        for level in selectedLevelsDict.keys():
+            if selectedLevelsDict[level] == 2 and int(level) < minSelectedLevel:
+                minSelectedLevel = int(level)
+
+    return minSelectedLevel
