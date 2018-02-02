@@ -21,7 +21,7 @@ class BaseRequest(object):
         self.max_results_param = "params[maxResults]"
         self.search_query_param = "params[searchQuery]"
         self.workspace_id = "workspace_id"
-        self.query_string = "query_string"
+        self.query_string = "params[q]"
 
     def validate_params(self, request):
         """
