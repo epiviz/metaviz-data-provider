@@ -103,7 +103,15 @@ def process_request():
 
     metaviz_request = create_request(param_method, request.values)
 
-    result, errorStr, response_status = metaviz_request.get_data()
+    if (request.values.get("method") in ["partitions", "measurements"]):
+        @cache.memoize()
+        def partitions_measurements_cache_call(datasource, method):
+            return metaviz_request.get_data()
+
+        result, errorStr, response_status = partitions_measurements_cache_call(request.values.get("params[datasource]"), request.values.get("method"))
+
+    else:
+        result, errorStr, response_status = metaviz_request.get_data()
 
     res = Response(response=ujson.dumps({"id": int(req_id), "error": errorStr, "result": result}),
                    status=response_status, mimetype="application/json")

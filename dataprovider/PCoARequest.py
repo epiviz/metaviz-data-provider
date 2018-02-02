@@ -104,7 +104,7 @@ class PCoARequest(BaseRequest):
             df = utils.process_result(rq_res)
 
             forPCoAmat = pandas.pivot_table(df, index=["label"], columns="s.id", values="agg", fill_value=0)
-
+            forPCoAmat = numpy.log2(forPCoAmat + 1)
             cols = {}
 
             # sklearn implementation
