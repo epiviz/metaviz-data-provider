@@ -110,7 +110,7 @@ class PCoARequest(BaseRequest):
             # sklearn implementation
             # metrics - http://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.pairwise_distances.html
             # MDS - http://scikit-learn.org/stable/modules/generated/sklearn.manifold.MDS.html#sklearn.manifold.MDS.fit
-            distMat = pairwise_distances(forPCoAmat, metric="braycurtis")
+            distMat = pairwise_distances(forPCoAmat.transpose(), metric="braycurtis")
             mds = MDS(n_components=2, dissimilarity="precomputed", n_init=1, max_iter=100, random_state=1000)
             result = mds.fit_transform(distMat)
 
