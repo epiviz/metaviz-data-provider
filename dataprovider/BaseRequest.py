@@ -19,9 +19,9 @@ class BaseRequest(object):
         self.depth_param = "params[depth]"
         self.file_id_param = "in_file_id"
         self.max_results_param = "params[maxResults]"
-        self.search_query_param = "params[searchQuery]"
+        self.search_query_param = "params[q]"
         self.workspace_id = "workspace_id"
-        self.query_string = "params[q]"
+        self.query_string = "query_string"
 
     def validate_params(self, request):
         """
