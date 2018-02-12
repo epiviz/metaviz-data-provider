@@ -131,6 +131,9 @@ def find_min_level(datasource_param, selectedLevels_param):
     if minSelectedLevel is None:
         minSelectedLevel = 6
 
+    if selectedLevels_param is None:
+        return minSelectedLevel
+
     selectedLevelsDict = selectedLevels_param
 
     if (hasattr(selectedLevelsDict, "keys")):

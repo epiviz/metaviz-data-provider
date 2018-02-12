@@ -213,7 +213,9 @@ class HierarchyRequest(BaseRequest):
         root_split = root_node.split("-")
 
         otu_request = False
-        if root_split[0] == "7":
+        hierarchy_depth = utils.find_min_level(self.params.get(self.datasource_param), None)
+
+        if root_split[0] == str(hierarchy_depth):
             otu_request = True
 
         if not otu_request:
