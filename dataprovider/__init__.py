@@ -77,6 +77,25 @@ def add_cors_headers(response):
 
 application.after_request(add_cors_headers)
 
+@application.route('/api/workspace/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api/workspace', methods = ['POST', 'OPTIONS', 'GET'])
+def workspace_api():
+    workspaceId = request.args.get('ws')
+    queryString = request.args.get('q')
+    reqId = int(request.args.get('requestId'))
+    if workspaceId == "" and queryString == "":
+        res = Response(response=ujson.dumps({"requestId": reqId, "type": "response", "data": []}),
+                       status=200, mimetype="application/json")
+    else:
+        request_dict = {"workspace_id": workspaceId, "query_string": queryString}
+        ws_request = WorkspaceRequest(request_dict)
+        result, errorStr, response_status = ws_request.get_data()
+        res = Response(response=ujson.dumps({"requestId": reqId, "error": errorStr, "type": "response", "data":
+            [{"content": result, "id": None, "id_v1": None, "name": "IHMP_ibd_1", "version": "4"}]}),
+                       status=response_status, mimetype="application/json")
+    return res
+
+
 @application.route("/api/", methods = ["POST", "OPTIONS", "GET"])
 @application.route("/api", methods = ["POST", "OPTIONS", "GET"])
 @application.route("/", methods = ["POST", "OPTIONS", "GET"])
