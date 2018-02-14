@@ -45,7 +45,7 @@ class WorkspaceRequest(BaseRequest):
         try:
             rq_res = utils.workspace_request(self.params.get(self.workspace_id), self.params.get(self.query_string))
             jsResp = ujson.loads(rq_res.text)
-            return jsResp['data'][0]['content']
+            return jsResp['data'][0]['content'], error, response_status
 
         except:
             error_info = sys.exc_info()
