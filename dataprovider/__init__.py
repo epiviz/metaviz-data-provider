@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, redirect
 from flask_cache import Cache
 import ujson
 import utils
@@ -95,6 +95,33 @@ def workspace_api():
                        status=response_status, mimetype="application/json")
     return res
 
+# Route for POST, OPTIONS, and GET requests
+@application.route('/api/ihmp_redirect/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api/ihmp_redirect', methods = ['POST', 'OPTIONS', 'GET'])
+def process_redirect():
+    """
+    Send a request to the RedirectRequest class to lookup Metaviz workspace id of iHMP file id
+    Args:
+    Returns:
+     res: Flask redirect containing Metaviz workspace
+    """
+
+    # For OPTIONS request, return an emtpy response
+    if request.method == 'OPTIONS':
+        res = jsonify({})
+        res.headers['Access-Control-Allow-Origin'] = '*'
+        res.headers['Access-Control-Allow-Headers'] = '*'
+        return res
+
+    in_params_id = request.values.get("fid")
+
+    request_dict = {"in_file_id":in_params_id}
+    redirect_request = RedirectRequest(request_dict)
+    if(in_params_id != None):
+        redirect_location = redirect_request.get_data()
+
+    res = redirect(redirect_location, code=302)
+    return res
 
 @application.route("/api/", methods = ["POST", "OPTIONS", "GET"])
 @application.route("/api", methods = ["POST", "OPTIONS", "GET"])
