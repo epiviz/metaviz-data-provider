@@ -16,7 +16,8 @@ import ast
 class PCoARequest(BaseRequest):
     def __init__(self, request):
         super(PCoARequest, self).__init__(request)
-        self.params_keys = [self.datasource_param, self.measurements_param, self.selectedLevels_param]
+        self.params_keys = [self.start_param, self.end_param, self.datasource_param, self.measurements_param,
+                            self.selectedLevels_param]
         self.params = self.validate_params(request)
 
     def validate_params(self, request):
@@ -81,23 +82,22 @@ class PCoARequest(BaseRequest):
 
         if markerGeneOrWgs == "wgs":
             qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)" \
-                     "<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(%s)) AND s.id IN %s with distinct f, s, " \
+                     "<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(%s)) AND (f.start >= %s AND f.end <= %s) " \
+                     "AND s.id IN %s with distinct f, s, " \
                      "v.val as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, " \
                      "f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, " \
-                     "f.order as order" % (self.params.get(self.datasource_param), str(minSelectedLevel), tick_samples)
+                     "f.order as order" % (self.params.get(self.datasource_param), str(minSelectedLevel),
+                                           str(self.params.get(self.start_param)), str(self.params.get(self.end_param)),
+                                           tick_samples)
         else:
-            # qryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-" \
-            #          "[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(" + str(minSelectedLevel) + ")) " \
-            #          "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label " \
-            #          "as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
-            #          "f.lineageLabel as lineageLabel, f.order as order"
-
             qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-" \
-                     "[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(%s)) AND s.id IN %s with distinct " \
+                     "[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth= toInt(%s)) AND (f.start >= %s AND f.end <= %s)" \
+                     "AND s.id IN %s with distinct " \
                      "f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, " \
                      "f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as " \
                      "lineageLabel, f.order as order" % (self.params.get(self.datasource_param), \
-                     str(minSelectedLevel), tick_samples)
+                     str(minSelectedLevel), str(self.params.get(self.start_param)), str(self.params.get(self.end_param)),
+                                                         tick_samples)
 
         try:
             rq_res = utils.cypher_call(qryStr)
