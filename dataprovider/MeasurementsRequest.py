@@ -44,9 +44,27 @@ class MeasurementsRequest(BaseRequest):
     Returns:
      result: Sample nodes information in database
     """
-    # qryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'})-[:DATASOURCE_OF]->()-" \
-    #          "[LEAF_OF]->()<-[:COUNT]-(s:Sample) RETURN DISTINCT ds,s"
-    qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(s:Sample) " \
+    result = None
+    error = None
+    response_status = 200
+
+    longitudinalQyrStr = "MATCH (ds:Datasource {label: '%s'}) RETURN ds.samplingType as sampling_type" \
+                            % (self.params.get(self.datasource_param))
+    try:
+        rq_res = utils.cypher_call(longitudinalQyrStr)
+        df = utils.process_result(rq_res)
+        longitudinal = df['sampling_type'].values[0]
+    except:
+        error_info = sys.exc_info()
+        error = "%s %s %s" % (str(error_info[0]), str(error_info[1]), str(error_info[2]))
+        response_status = 500
+        return result, error, response_status
+
+    if longitudinal:
+        qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(:Sample)-[:SAMPLE_OF]->(su:Subject) " \
+                 "RETURN DISTINCT ds,su" % (self.params.get(self.datasource_param))
+    else:
+        qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(s:Sample) " \
              "RETURN DISTINCT ds,s" % (self.params.get(self.datasource_param))
 
     rq_res = utils.cypher_call(qryStr)
@@ -60,15 +78,23 @@ class MeasurementsRequest(BaseRequest):
 
     dsDescription = []
     dsSequencingType = []
+
+
     for index, row in df.iterrows():
-        temp = row['s']
-        measurements.append(temp['id'])
-        del temp['id']
+        if longitudinal:
+            temp = row['su']
+            measurements.append(temp['SubjectID'])
+            del temp['SubjectID']
+        else:
+            temp = row['s']
+            measurements.append(temp['id'])
+            del temp['id']
         anno.append(temp)
         dsGroup.append(row['ds']['label'])
         dsId.append(row['ds']['label'])
         dsDescription.append(row['ds']['description'])
         dsSequencingType.append(row['ds']['sequencingType'])
+
     rowQryStr = "MATCH ()-[r]-() WHERE EXISTS(r.val) RETURN min(r.val) as minVal, max(r.val) as maxVal"
 
     rq_res2 = utils.cypher_call(rowQryStr)

@@ -5,6 +5,7 @@ import utils
 
 from BaseRequest import BaseRequest
 from CombinedRequest import CombinedRequest
+from CombinedTimeRequest import CombinedTimeRequest
 from MeasurementsRequest import MeasurementsRequest
 from PartitionsRequest import PartitionsRequest
 from HierarchyRequest import HierarchyRequest
@@ -51,6 +52,8 @@ def create_request(action, request):
     request_mapping['pcoa'] = PCoARequest
     request_mapping['diversity'] = DiversityRequest
     request_mapping['combined'] = CombinedRequest
+    request_mapping['combinedTime'] = CombinedTimeRequest
+
     request_mapping['featureData'] = FeatureRequest
     request_mapping['search'] = SearchRequest
 
