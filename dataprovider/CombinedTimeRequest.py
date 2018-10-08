@@ -1,6 +1,8 @@
 import utils
 import pandas
 import sys
+import ujson
+import numpy
 from BaseRequest import BaseRequest
 import ast
 """
@@ -10,10 +12,10 @@ import ast
 .. moduleauthor:: Justin Wagner and Jayaram Kancherla
 
 """
-class CombinedRequest(BaseRequest):
+class CombinedTimeRequest(BaseRequest):
 
     def __init__(self, request):
-        super(CombinedRequest, self).__init__(request)
+        super(CombinedTimeRequest, self).__init__(request)
         self.params_keys = [self.start_param, self.end_param, self.order_param, self.selection_param,
                        self.selectedLevels_param, self.measurements_param, self.datasource_param]
         self.params = self.validate_params(request)
@@ -52,6 +54,8 @@ class CombinedRequest(BaseRequest):
         """
 
         tick_samples = self.params.get(self.measurements_param)
+        #tick_samples = tick_samples.replace("\"", "\'")
+
         result = None
 
         error = None
@@ -154,16 +158,137 @@ class CombinedRequest(BaseRequest):
                        str(self.params.get(self.start_param)), str(self.params.get(self.end_param)), tick_samples)
 
             else:
-              qryStr = "MATCH (ds:Datasource {label: '%s'}) MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
-                       "(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) USING INDEX s:Sample(id) WHERE " \
-                       "(f.depth=%s OR f.id IN %s) AND (f.start >=%s AND f.end <= %s) AND s.id IN %s with distinct " \
-                       "f, s, SUM(v.val) as agg RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, " \
+              if (self.params.get(self.start_param) != "" and self.params.get(self.end_param) != ""):
+                qryStr = "MATCH (ds:Datasource {label: '%s'}) MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
+                       "(f:Feature) MATCH (su:Subject)-[:TIMEPOINT]->(sa:Sample) MATCH (sa)-[v:COUNT]->()<-[:LEAF_OF]-(f) WHERE " \
+                       "(f.depth=%s OR f.id IN %s) AND (f.start >=%s AND f.end <= %s) AND su.SubjectID IN %s with distinct " \
+                       "f, sa, SUM(v.val) as agg RETURN distinct agg, sa.id as sid, sa.SubjectID as SubjectID, f.label as label, f.leafIndex as index, " \
                        "f.end as end, f.start as start, f.id as id, f.lineage as lineage, f.lineageLabel as " \
-                       "lineageLabel, f.order as order" % (self.params.get(self.datasource_param),
-                       str(minSelectedLevel), selNodes, self.params.get(self.start_param),
-                       self.params.get(self.end_param), tick_samples)
+                       "lineageLabel, f.order as order, sa.Day as timePoint" % (self.params.get(self.datasource_param),
+                                                                                str(minSelectedLevel), selNodes,
+                                                                                self.params.get(self.start_param),
+                                                                                self.params.get(self.end_param),
+                                                                                tick_samples)
+              else:
+                  qryStr = "MATCH (ds:Datasource {label: '%s'}) MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
+                           "(f:Feature) MATCH (su:Subject)-[:TIMEPOINT]->(sa:Sample) MATCH (sa)-[v:COUNT]->()<-[:LEAF_OF]-(f) WHERE " \
+                           "(f.depth=%s OR f.id IN %s) AND su.SubjectID IN %s with distinct " \
+                           "f, sa, SUM(v.val) as agg RETURN distinct agg, sa.id as sid, sa.SubjectID as SubjectID, f.label as label, f.leafIndex as index, " \
+                           "f.id as id, f.lineage as lineage, f.lineageLabel as " \
+                           "lineageLabel, f.order as order, sa.Day as timePoint" % (
+                           self.params.get(self.datasource_param),
+                           str(minSelectedLevel), selNodes,
+                           tick_samples)
+
             rq_res = utils.cypher_call(qryStr)
             df = utils.process_result(rq_res)
+
+            grouped_df = df.groupby(["SubjectID", "lineage"])
+
+            timePointQryStr = "MATCH (su:Subject)-[:TIMEPOINT]->(sa:Sample) WHERE su.SubjectID IN %s with distinct " \
+                     "sa RETURN distinct sa.id as sid, sa.SubjectID as SubjectID, sa.Day as timePoint ORDER BY timePoint" % (tick_samples)
+            timePointQryStr_rq_res = utils.cypher_call(timePointQryStr)
+            timePoint_df = utils.process_result(timePointQryStr_rq_res)
+
+            timepoints = numpy.unique(timePoint_df["timePoint"].values)
+            sample_ids = timePoint_df["sid"].values
+
+            df_time_points_temp = []
+            empty_array = []
+            group_size = 0
+
+            for name, group in grouped_df:
+                group_size = len(group["timePoint"].values)
+                if group_size == 0:
+                    continue
+                sample_name = name[0]
+                lineage_temp = name[1]
+
+                group = group.sort_values(by="timePoint")
+                temp_dict = {}
+                temp_dict["agg"] = group["agg"].values.tolist()
+                temp_dict["s.id"] = group["sid"].values[0]
+                temp_dict["SubjectID"] = group["SubjectID"].values[0]
+                temp_dict["label"] = group["label"].values[0]
+                temp_dict["index"] = group["index"].values[0]
+                if (hasattr(group, "end")):
+                    temp_dict["end"] = group["end"].values[0]
+                else:
+                    temp_dict["end"] = 100000
+                if (hasattr(group, "start")):
+                    temp_dict["start"] = group["start"].values[0]
+                else:
+                    temp_dict["start"] = 1
+                temp_dict["id"] = group["id"].values[0]
+                temp_dict["lineage"] = group["lineage"].values[0]
+                temp_dict["lineageLabel"] = group["lineageLabel"].values[0]
+                temp_dict["order"] = group["order"].values[0]
+                temp_dict["timePoint"] = group["timePoint"].values.tolist()
+
+                group_timepoints = group["timePoint"].values
+                timepoint_idx = 0
+                for t in timepoints:
+                    if t not in group_timepoints:
+                        if temp_dict["agg"] is None:
+                            temp_dict["agg"] = [0.0]
+                        else:
+                            temp_dict["agg"].insert(timepoint_idx,0.0)
+                        if temp_dict["timePoint"] is None:
+                            temp_dict["timePoint"] = [t]
+                        else:
+                            temp_dict["timePoint"].insert(timepoint_idx, t)
+
+                    timepoint_idx = timepoint_idx + 1
+
+                temp_dict["agg"] = ujson.dumps(temp_dict["agg"])
+                temp_dict["timePoint"] = ujson.dumps(temp_dict["timePoint"])
+
+                df_time_points_temp.append(group["agg"].values.tolist())
+                empty_array.append(temp_dict)
+
+            unique_timepoints = df['timePoint'].unique()
+            num_unique_timepoints = len(unique_timepoints)
+            unique_labels = df['label'].unique()
+            averages = {}
+            std_devs = {}
+            for u in unique_labels:
+                averages[u] = {}
+                std_devs[u] = {}
+
+            timepoint_grouped_df = df.groupby(["lineage", "timePoint"])
+
+            for lineage, timepoint_group in timepoint_grouped_df:
+                temp_timepoint_group = timepoint_group.sort_values(by='timePoint')
+                label = timepoint_group['label'].values[0]
+                timepoint = timepoint_group['timePoint'].values[0]
+                temp_average = timepoint_group['agg'].mean()
+                temp_std_dev = timepoint_group['agg'].std()
+                if numpy.isnan(temp_average):
+                    temp_average = 0.0
+                if numpy.isnan(temp_std_dev):
+                    temp_std_dev = 0.0
+                averages[label][timepoint] = temp_average
+                std_devs[label][timepoint] = temp_std_dev
+
+            sorted_list_averages = {}
+
+            for k in averages.keys():
+                if k not in sorted_list_averages.keys():
+                    sorted_list_averages[k] = []
+                sorted_keys = sorted(averages[k].keys())
+                for m in sorted_keys:
+                    sorted_list_averages[k].append(averages[k][m])
+
+            sorted_list_std_devs = {}
+
+            for k in std_devs.keys():
+                if k not in sorted_list_std_devs.keys():
+                    sorted_list_std_devs[k] = []
+                sorted_keys = sorted(std_devs[k].keys())
+                for m in sorted_keys:
+                    sorted_list_std_devs[k].append(std_devs[k][m])
+
+            df = pandas.DataFrame(empty_array)
 
             root_is_present = True
             if (hasattr(selectionDict, "keys")):
@@ -205,12 +330,35 @@ class CombinedRequest(BaseRequest):
                 # for pandas > 0.17
                 df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start",
                                                          "end", "order"],
-                                              columns="s.id", values="agg", fill_value=0).sortlevel("index")
+                                              columns="SubjectID", values="agg", fill_value=0, aggfunc='first').sort_index("index")
 
                 cols = {}
 
                 for col in df_pivot:
                     cols[col] = df_pivot[col].values.tolist()
+
+                    for idx in range(len(cols[col])):
+                        if cols[col][idx] == 0.0:
+                            cols[col][idx] = ujson.dumps(numpy.zeros(len(timepoints)))
+
+                samplesQryStr = "MATCH (su:Subject)-[:TIMEPOINT]->(sa:Sample) WHERE su.SubjectID IN %s " \
+                                "RETURN distinct su.SubjectID as SubjectID, sa, sa.Day as timePoint ORDER BY timePoint" % (tick_samples)
+                samplesQryStr_rq_res = utils.cypher_call(samplesQryStr)
+                samples_df = utils.process_result(samplesQryStr_rq_res)
+
+                subject_metadata = {}
+
+                for k in samples_df.itertuples():
+                    if k[1] not in subject_metadata:
+                        subject_metadata[k[1]] = {}
+                        subject_metadata[k[1]]['timepoints'] = []
+                        for j in k[2].keys():
+                            subject_metadata[k[1]][j] = []
+
+                for k in samples_df.itertuples():
+                    subject_metadata[k[1]]['timepoints'].append(k[3])
+                    for j in k[2].keys():
+                        subject_metadata[k[1]][j].append(k[2][j])
 
                 rows = {}
                 rows['metadata'] = {}
@@ -223,8 +371,11 @@ class CombinedRequest(BaseRequest):
                     else:
                         rows['metadata'][row] = df_pivot.index.get_level_values(row).values.tolist()
 
-                result = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
+                rows['metadata']['means'] = ujson.dumps(sorted_list_averages)
+                rows['metadata']['std_devs'] = ujson.dumps(sorted_list_std_devs)
+                rows['metadata']['subject_metadata'] = ujson.dumps(subject_metadata)
 
+                result = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
             else:
                 cols = {}
 

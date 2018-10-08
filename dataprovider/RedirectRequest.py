@@ -36,7 +36,6 @@ class RedirectRequest(BaseRequest):
      redirect_url: Metaviz URL for workspace
     """
 
-    # lookup_table_file = "./data/igs_workspace_lookup_table.csv"
     lookup_table_file = preset_configs.METAVIZ_REDIRECT_FILE_PATH
 
     df = pandas.read_csv(lookup_table_file)

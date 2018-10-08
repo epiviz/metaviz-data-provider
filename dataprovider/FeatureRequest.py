@@ -36,12 +36,6 @@ class FeatureRequest(BaseRequest):
         error = None
         response_status = 200
 
-        # qryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'}) " \
-        #          "MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample)" \
-        #          "USING INDEX s:Sample(id) WHERE (f.id='" + self.params.get(self.feature_param) + "') AND " \
-        #          "s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg " \
-        #          "RETURN distinct agg, s.id, f.label as label, f.leafIndex as index, f.end as end, f.start as start, " \
-        #          "f.id as id, f.lineage as lineage, f.lineageLabel as lineageLabel, f.order as order"
         qryStr = "MATCH (ds:Datasource {label: '%s'}) MATCH (ds)-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
                  "(f:Feature) MATCH (f)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) USING INDEX s:Sample(id) WHERE " \
                  "(f.id='%s') AND s.id IN %s with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, " \
@@ -82,9 +76,6 @@ class FeatureRequest(BaseRequest):
                     else:
                         rows['metadata'][row] = df_pivot.index.get_level_values(row).values.tolist()
 
-                # sampleQryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'})-" \
-                #                "[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->" \
-                #                "()<-[v:COUNT]-(s:Sample) WHERE s.id IN " + tick_samples + " RETURN DISTINCT s"
                 sampleQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
                                "(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE s.id IN %s RETURN DISTINCT s" \
                                % (self.params.get(self.datasource_param), tick_samples)

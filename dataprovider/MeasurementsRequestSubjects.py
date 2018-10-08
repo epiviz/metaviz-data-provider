@@ -10,10 +10,10 @@ import sys
 
 """
 
-class MeasurementsRequest(BaseRequest):
+class MeasurementsRequestSubjects(BaseRequest):
 
   def __init__(self, request):
-      super(MeasurementsRequest, self).__init__(request)
+      super(MeasurementsRequestSubjects, self).__init__(request)
       self.params_keys = [self.datasource_param]
       self.params = self.validate_params(request)
 
@@ -44,11 +44,16 @@ class MeasurementsRequest(BaseRequest):
     Returns:
      result: Sample nodes information in database
     """
-    qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[:LEAF_OF]->()<-[:COUNT]-(s:Sample) " \
-             "RETURN DISTINCT ds,s" % (self.params.get(self.datasource_param))
+    # qryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'})-[:DATASOURCE_OF]->()-" \
+    #          "[LEAF_OF]->()<-[:COUNT]-(s:Sample) RETURN DISTINCT ds,s"
+    # qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(s:Sample) " \
+    #          "RETURN DISTINCT ds,s" % (self.params.get(self.datasource_param))
+
+    qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(:Sample)-[:SAMPLE_OF]->(su:Subject) " \
+             "RETURN DISTINCT ds,su" % (self.params.get(self.datasource_param))
+
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
-
     measurements = []
 
     anno = []
@@ -59,9 +64,9 @@ class MeasurementsRequest(BaseRequest):
     dsDescription = []
     dsSequencingType = []
     for index, row in df.iterrows():
-        temp = row['s']
-        measurements.append(temp['id'])
-        del temp['id']
+        temp = row['su']
+        measurements.append(temp['SubjectID'])
+        del temp['SubjectID']
         anno.append(temp)
         dsGroup.append(row['ds']['label'])
         dsId.append(row['ds']['label'])

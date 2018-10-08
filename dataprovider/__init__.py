@@ -4,8 +4,8 @@ import ujson
 import utils
 
 from BaseRequest import BaseRequest
-from CombinedRequest import CombinedRequest
-from MeasurementsRequest import MeasurementsRequest
+from CombinedTimeRequest import CombinedTimeRequest
+from MeasurementsRequestSubjectsDev import MeasurementsRequestSubjectsDev
 from PartitionsRequest import PartitionsRequest
 from HierarchyRequest import HierarchyRequest
 from DiversityRequest import DiversityRequest
@@ -13,9 +13,11 @@ from SearchRequest import SearchRequest
 from RedirectRequest import RedirectRequest
 from WorkspaceRequest import WorkspaceRequest
 from FeatureRequest import FeatureRequest
+from FeatureTimeRequest import FeatureTimeRequest
 from PCARequest import PCARequest
 from PCoARequest import PCoARequest
-
+from PCATimeRequest import PCATimeRequest
+from FeatureLookupRequest import FeatureLookupRequest
 
 
 """
@@ -43,16 +45,22 @@ def create_request(action, request):
     """
 
     request_mapping = {}
-
     request_mapping['hierarchy'] = HierarchyRequest
+    request_mapping['hierarchyFilter'] = HierarchyRequest
     request_mapping['partitions'] = PartitionsRequest
-    request_mapping['measurements'] = MeasurementsRequest
-    request_mapping['pca'] = PCARequest
+    request_mapping['measurements'] = MeasurementsRequestSubjectsDev
+
     request_mapping['pcoa'] = PCoARequest
+    request_mapping['pca'] = PCoARequest
+    request_mapping['pcaTime'] = PCATimeRequest
     request_mapping['diversity'] = DiversityRequest
-    request_mapping['combined'] = CombinedRequest
+    request_mapping['combined'] = CombinedTimeRequest
+    request_mapping['combinedTime'] = CombinedTimeRequest
+
+    request_mapping['featureTimeData'] = FeatureTimeRequest
     request_mapping['featureData'] = FeatureRequest
     request_mapping['search'] = SearchRequest
+    request_mapping['featureLookup'] = FeatureLookupRequest
 
     new_request = request_mapping[action](request)
     return new_request
@@ -146,7 +154,7 @@ def process_request():
 
     param_method = request.values.get("method")
     req_id = request.values.get("id")
-
+    print("param_method: " + param_method)
     metaviz_request = create_request(param_method, request.values)
 
     if (request.values.get("method") in ["partitions", "measurements"]):

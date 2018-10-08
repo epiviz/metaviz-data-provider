@@ -25,10 +25,6 @@ class SearchRequest(BaseRequest):
     error = None
     response_status = 200
 
-    # qryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'})-[:DATASOURCE_OF]->" \
-    #          "(:Feature)-[:PARENT_OF*]->(f:Feature) WHERE f.label contains '" + self.params.get(self.search_query_param) + "' " \
-    #          "RETURN f.label as gene, f.start as start, f.end as end, 'neo4j' as seqName, f.id as nodeId, f.taxonomy as level " \
-    #          "ORDER BY f.depth limit " + self.params.get(self.max_results_param)
     qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature) WHERE " \
              "f.label contains '%s' RETURN f.label as gene, f.start as start, f.end as end, 'neo4j' as seqName, " \
              "f.id as nodeId, f.taxonomy as level ORDER BY f.depth limit %s" % (self.params.get(self.datasource_param), \

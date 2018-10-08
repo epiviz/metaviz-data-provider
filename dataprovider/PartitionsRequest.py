@@ -43,9 +43,6 @@ class PartitionsRequest(BaseRequest):
      arr: Feature range under root of tree
     """
 
-    # qryStr = "MATCH (ds:Datasource {label: '" + self.params.get(self.datasource_param) + "'})-[:DATASOURCE_OF]->" \
-    #          "(f:Feature {id:'0-0'}) RETURN  f.start as start, f.end as end"
-
     qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature {id:'0-0'}) RETURN f.start as start, " \
              "f.end as end" % (self.params.get(self.datasource_param))
     rq_res = utils.cypher_call(qryStr)

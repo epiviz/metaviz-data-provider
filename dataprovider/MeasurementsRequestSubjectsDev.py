@@ -10,10 +10,10 @@ import sys
 
 """
 
-class MeasurementsRequest(BaseRequest):
+class MeasurementsRequestSubjectsDev(BaseRequest):
 
   def __init__(self, request):
-      super(MeasurementsRequest, self).__init__(request)
+      super(MeasurementsRequestSubjectsDev, self).__init__(request)
       self.params_keys = [self.datasource_param]
       self.params = self.validate_params(request)
 
@@ -23,7 +23,6 @@ class MeasurementsRequest(BaseRequest):
       for key in self.params_keys:
         if request.has_key(key):
             params[key] = request.get(key)
-            print(params[key])
         else:
             if key not in self.params_keys:
                 raise Exception("missing params in request")
@@ -44,10 +43,30 @@ class MeasurementsRequest(BaseRequest):
     Returns:
      result: Sample nodes information in database
     """
-    qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[:LEAF_OF]->()<-[:COUNT]-(s:Sample) " \
-             "RETURN DISTINCT ds,s" % (self.params.get(self.datasource_param))
+    qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->()-[LEAF_OF]->()<-[:COUNT]-(:Sample)-[:SAMPLE_OF]->(su:Subject) " \
+             "RETURN DISTINCT ds,su" % (self.params.get(self.datasource_param))
+
     rq_res = utils.cypher_call(qryStr)
     df = utils.process_result(rq_res)
+
+    samplesQryStr = "MATCH (su:Subject)-[:TIMEPOINT]->(sa:Sample) RETURN distinct su.SubjectID as SubjectID, " \
+                    "sa, sa.Day as timePoint ORDER BY timePoint"
+    samplesQryStr_rq_res = utils.cypher_call(samplesQryStr)
+    samples_df = utils.process_result(samplesQryStr_rq_res)
+
+    subject_metadata = {}
+
+    for k in samples_df.itertuples():
+        if k[1] not in subject_metadata:
+            subject_metadata[k[1]] = {}
+            subject_metadata[k[1]]['timepoints'] = []
+            for j in k[2].keys():
+                subject_metadata[k[1]][j] = []
+
+    for k in samples_df.itertuples():
+        subject_metadata[k[1]]['timepoints'].append(k[3])
+        for j in k[2].keys():
+            subject_metadata[k[1]][j].append(k[2][j])
 
     measurements = []
 
@@ -59,10 +78,10 @@ class MeasurementsRequest(BaseRequest):
     dsDescription = []
     dsSequencingType = []
     for index, row in df.iterrows():
-        temp = row['s']
-        measurements.append(temp['id'])
-        del temp['id']
-        anno.append(temp)
+        temp = row['su']
+        measurements.append(temp['SubjectID'])
+        anno.append(subject_metadata[temp['SubjectID']])
+        del temp['SubjectID']
         dsGroup.append(row['ds']['label'])
         dsId.append(row['ds']['label'])
         dsDescription.append(row['ds']['description'])
