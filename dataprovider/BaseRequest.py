@@ -17,11 +17,14 @@ class BaseRequest(object):
         self.feature_param = "params[feature]"
         self.root_node_param = "params[nodeId]"
         self.depth_param = "params[depth]"
+        self.filter = "params[filter]"
+        self.featureList_param = "params[featureList]"
         self.file_id_param = "in_file_id"
         self.max_results_param = "params[maxResults]"
         self.search_query_param = "params[q]"
         self.workspace_id = "workspace_id"
         self.query_string = "query_string"
+        self.timepoint_param = "params[timepoint]"
 
     def validate_params(self, request):
         """

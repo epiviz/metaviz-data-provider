@@ -119,7 +119,7 @@ def workspace_request(wid, query):
     return rq_res
 
 def find_min_level(datasource_param, selectedLevels_param):
-    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature)<-[:LEAF_OF]-(:Feature)<-[:PARENT_OF*]-(:Feature)<-" \
+    qryStr = "MATCH (f:Feature)<-[:LEAF_OF]-(:Feature)<-[:PARENT_OF*]-(:Feature)<-" \
              "[:DATASOURCE_OF]-(ds:Datasource {label: '%s'}) " \
              "RETURN f.depth as depth  LIMIT 1" % datasource_param
 

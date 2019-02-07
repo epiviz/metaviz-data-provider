@@ -3,6 +3,7 @@ import sys
 import pandas
 from BaseRequest import BaseRequest
 import ast
+import cypher_queries
 
 """
 .. module:: HierarchyRequest
@@ -15,7 +16,7 @@ class HierarchyRequest(BaseRequest):
     def __init__(self, request):
         super(HierarchyRequest, self).__init__(request)
         self.params_keys = [self.selection_param, self.order_param, self.selectedLevels_param, self.root_node_param,
-                       self.depth_param, self.datasource_param]
+                       self.depth_param, self.datasource_param, self.filter]
         self.params = self.validate_params(request)
 
     def validate_params(self, request):
@@ -121,6 +122,27 @@ class HierarchyRequest(BaseRequest):
         if root_node == None or len(root_node) == 0 or root_node == "0-0" or root_node == "0-1":
             root_node = "0-0"
 
+        filter = []
+        if type(self.params.get(self.filter)) == unicode and not (self.params.get(self.filter) == "" or self.params.get(self.filter) == "{}"):
+            keys_values = ast.literal_eval(self.params.get(self.filter))
+            keys = keys_values.keys()
+            for k in keys:
+                if keys_values[k] == 1:
+                    filter.append(k)
+            print filter
+        else:
+            filter = None
+
+        filter_id = None
+        if filter is not None and len(filter) != 0:
+            print("filter length not 0")
+            filter_id = filter
+            print filter_id
+
+        if filter == "null":
+            filter_id = None
+
+
         taxonomy = False
         result = None
         error = None
@@ -129,21 +151,18 @@ class HierarchyRequest(BaseRequest):
         otu_expand_request = False
         if "_" in root_node:
             otu_expand_request = True
-
+        print("done with pre-processing")
         if otu_expand_request:
+            print("otu_expand_request")
+
             split = root_node.split("_")
             all_nodes = "','".join(split)
             all_nodes = "['" + all_nodes + "']"
-
-            qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-" \
-                     "[:PARENT_OF*0..3]->(f2:Feature) WHERE f.id IN %s OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
-                     "(fParent:Feature) with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
-                     "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
-                     "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, " \
-                     "ff.partition as partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, " \
-                     "ff.nchildren as nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, " \
-                     "ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order" \
-                     % (self.params.get(self.datasource_param), all_nodes)
+            if filter_id != None:
+                qryStr = cypher_queries.otu_expand_request_taxa_hier_with_filter(self.params.get(self.datasource_param), all_nodes, filter_id)
+            else:
+                qryStr = cypher_queries.otu_expand_request_taxa_hier_without_filter(self.params.get(self.datasource_param), all_nodes)
+            print(qryStr)
 
             tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                       "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -155,6 +174,8 @@ class HierarchyRequest(BaseRequest):
             nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]" \
                                   "->(f:Feature)-[:PARENT_OF*0..3]->(f2:Feature) return f2.depth as level, " \
                                   "count(*) as nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param))
+            print(nodesPerLevelQryStr)
+
             try:
                 rq_res = utils.cypher_call(qryStr)
                 df = utils.process_result(rq_res)
@@ -209,24 +230,24 @@ class HierarchyRequest(BaseRequest):
                 response_status = 500
 
             return result, error, response_status
-
         root_split = root_node.split("-")
 
         otu_request = False
+
         hierarchy_depth = utils.find_min_level(self.params.get(self.datasource_param), None)
 
         if root_split[0] == str(hierarchy_depth):
             otu_request = True
 
         if not otu_request:
+            print("In not otu_request")
             if len(root_node) == 0 or root_node == "0-0" or root_node == "0-1":
-                qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature {id:'%s'})-" \
-                         "[:PARENT_OF*0..3]->(f2:Feature) with collect(f2) + f as nodesFeat unwind nodesFeat " \
-                         "as ff return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
-                         "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as " \
-                         "partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as " \
-                         "nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by " \
-                         "ff.depth, ff.leafIndex, ff.order" % (self.params.get(self.datasource_param), root_node)
+                if filter_id != None:
+                    qryStr = cypher_queries.not_otu_request_taxa_hier_with_filter_root(self.params.get(self.datasource_param), root_node, filter_id)
+                else:
+                    qryStr = cypher_queries.not_otu_request_taxa_hier_without_filter_root(self.params.get(self.datasource_param),
+                                                                                 root_node)
+
 
                 tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                           "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -236,18 +257,14 @@ class HierarchyRequest(BaseRequest):
                 taxonomy = True
 
                 nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature {id:'%s'})-" \
-                                  "[:PARENT_OF*0..3]->(f2:Feature) return f2.depth as level, count(*) as " \
-                                  "nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param), root_node)
-
+                                  "[:PARENT_OF*]->(f2:Feature {depth: %s}) return f2.depth as level, count(*) as " \
+                                  "nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param), root_node, self.params.get(self.depth_param))
             else:
-                qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
-                         "(f:Feature {id:'%s'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
-                         "(fParent:Feature) with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
-                         "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
-                         "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as " \
-                         "partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as " \
-                         "nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by " \
-                         "ff.depth, ff.leafIndex, ff.order" % (self.params.get(self.datasource_param), root_node)
+                if filter_id != None:
+                    qryStr = cypher_queries.not_otu_request_taxa_hier_with_filter_not_root(self.params.get(self.datasource_param), root_node, filter_id)
+                else:
+                    qryStr = cypher_queries.not_otu_request_taxa_hier_without_filter_not_root(self.params.get(self.datasource_param), root_node)
+
 
                 tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                           "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -336,16 +353,13 @@ class HierarchyRequest(BaseRequest):
             return result, error, response_status
 
         else:
-            otu_parent_id = root_split[1] + "-" + root_split[2]
+            print("otu parent id request")
 
-            qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
-                     "(f:Feature {id:'%s'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
-                     "(fParent:Feature) with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff return " \
-                     "distinct ff.lineage as lineage, ff.start as start, ff.label as label, ff.leafIndex as " \
-                     "leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, ff.end as " \
-                     "end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.taxonomy as " \
-                     "taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order" \
-                     % (self.params.get(self.datasource_param), otu_parent_id)
+            otu_parent_id = root_split[1] + "-" + root_split[2]
+            if filter_id != None:
+                qryStr = cypher_queries.otu_parent_request_taxa_hier_with_filter(self.params.get(self.datasource_param), otu_parent_id, filter_id)
+            else:
+                qryStr = cypher_queries.otu_parent_request_taxa_hier_without_filter(self.params.get(self.datasource_param), otu_parent_id)
 
             tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                       "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
