@@ -5,6 +5,8 @@ import ujson
 import numpy
 from BaseRequest import BaseRequest
 import ast
+import numpy
+
 """
 .. module:: CombinedRequest
    :synopsis: Query Neo4j Sample nodes and compute aggregation function over selected Feature nodes
@@ -227,6 +229,8 @@ class CombinedTimeRequest(BaseRequest):
             rq_res = utils.cypher_call(qryStr)
             df = utils.process_result(rq_res)
 
+            df["agg"] = numpy.log2(df["agg"] + 1)
+
             grouped_df = df.groupby(["SubjectID", "lineage"])
 
             timePointQryStr = "MATCH (su:Subject)-[:TIMEPOINT]->(sa:Sample) WHERE su.SubjectID IN %s with distinct " \
@@ -299,38 +303,77 @@ class CombinedTimeRequest(BaseRequest):
                 averages[u] = {}
                 std_devs[u] = {}
 
-            timepoint_grouped_df = df.groupby(["lineage", "timePoint"])
+            print(df.head())
+            # timepoint_grouped_df = df.groupby(["lineage", "SubjectID"])
 
-            for lineage, timepoint_group in timepoint_grouped_df:
+            # print(timepoint_grouped_df)
+
+            # for key, timepoint_group in timepoint_grouped_df:
+            #     print(key)
+            #     subjectId = key[1]
+            #     print(timepoint_group)
+            #     temp_timepoint_group = timepoint_group.sort_values(by='timePoint')
+
+            #     label = timepoint_group['label'].values
+            #     print(label)
+            #     label = label[0]
+            #     timepoint = timepoint_group['timePoint'].values
+            #     print(timepoint)
+            #     timepoint = timepoint[0]
+            #     temp_average = timepoint_group['agg'].mean()
+            #     temp_std_dev = timepoint_group['agg'].std()
+            #     if numpy.isnan(temp_average):
+            #         temp_average = 0.0
+            #     if numpy.isnan(temp_std_dev):
+            #         temp_std_dev = 0.0
+                
+            #     averages[label][subjectId] = temp_average
+            #     std_devs[label][subjectId] = temp_std_dev
+
+            timepoint_grouped_df = df.groupby(["lineage"])
+            print(timepoint_grouped_df)
+
+            for key, timepoint_group in timepoint_grouped_df:
+                # print(key)
+                # subjectId = key[1]
+                # print(timepoint_group)
                 temp_timepoint_group = timepoint_group.sort_values(by='timePoint')
-                label = timepoint_group['label'].values[0]
-                timepoint = timepoint_group['timePoint'].values[0]
+
+                label = timepoint_group['label'].values
+                # print(label)
+                label = label[0]
+                # timepoint = timepoint_group['timePoint'].values
+                # print(timepoint)
+                # timepoint = timepoint[0]
                 temp_average = timepoint_group['agg'].mean()
                 temp_std_dev = timepoint_group['agg'].std()
                 if numpy.isnan(temp_average):
                     temp_average = 0.0
                 if numpy.isnan(temp_std_dev):
                     temp_std_dev = 0.0
-                averages[label][timepoint] = temp_average
-                std_devs[label][timepoint] = temp_std_dev
+                
+                averages[label] = temp_average
+                std_devs[label] = temp_std_dev
 
-            sorted_list_averages = {}
+            # print(averages)
+            # print(std_devs)
+            # sorted_list_averages = {}
 
-            for k in averages.keys():
-                if k not in sorted_list_averages.keys():
-                    sorted_list_averages[k] = []
-                sorted_keys = sorted(averages[k].keys())
-                for m in sorted_keys:
-                    sorted_list_averages[k].append(averages[k][m])
+            # for k in averages.keys():
+            #     if k not in sorted_list_averages.keys():
+            #         sorted_list_averages[k] = []
+            #     sorted_keys = sorted(averages[k].keys())
+            #     for m in sorted_keys:
+            #         sorted_list_averages[k].append(averages[k][m])
 
-            sorted_list_std_devs = {}
+            # sorted_list_std_devs = {}
 
-            for k in std_devs.keys():
-                if k not in sorted_list_std_devs.keys():
-                    sorted_list_std_devs[k] = []
-                sorted_keys = sorted(std_devs[k].keys())
-                for m in sorted_keys:
-                    sorted_list_std_devs[k].append(std_devs[k][m])
+            # for k in std_devs.keys():
+            #     if k not in sorted_list_std_devs.keys():
+            #         sorted_list_std_devs[k] = []
+            #     sorted_keys = sorted(std_devs[k].keys())
+            #     for m in sorted_keys:
+            #         sorted_list_std_devs[k].append(std_devs[k][m])
 
             df = pandas.DataFrame(empty_array)
 
@@ -422,8 +465,8 @@ class CombinedTimeRequest(BaseRequest):
                     else:
                         rows['metadata'][row] = df_pivot.index.get_level_values(row).values.tolist()
 
-                rows['metadata']['means'] = ujson.dumps(sorted_list_averages)
-                rows['metadata']['std_devs'] = ujson.dumps(sorted_list_std_devs)
+                rows['metadata']['means'] = ujson.dumps(averages)
+                rows['metadata']['std_devs'] = ujson.dumps(std_devs)
                 rows['metadata']['subject_metadata'] = ujson.dumps(subject_metadata)
 
                 result = {"cols": cols, "rows": rows, "globalStartIndex": (min(rows['start']))}
