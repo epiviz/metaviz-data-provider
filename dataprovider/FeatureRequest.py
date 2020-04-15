@@ -64,7 +64,7 @@ class FeatureRequest(BaseRequest):
                 # for pandas > 0.17
                 df_pivot = pandas.pivot_table(df, index=["id", "label", "index", "lineage", "lineageLabel", "start",
                                                          "end", "order"],
-                                              columns="s.id", values="agg", fill_value=0).sortlevel("index")
+                                              columns="s.id", values="agg", fill_value=0).sort_index("index")
 
                 cols = {}
 

@@ -1,5 +1,5 @@
 import requests as rqs
-import ujson
+import json
 import pandas
 from config import preset_configs
 
@@ -23,7 +23,7 @@ def process_result(result):
     """
     rows = []
 
-    jsResp = ujson.loads(result.text)
+    jsResp = json.loads(result.text)
 
     for row in jsResp["results"][0]["data"]:
         rows.append(row['row'])
@@ -47,7 +47,7 @@ def process_result_graph(result):
     """
     rows = []
 
-    jsResp = ujson.loads(result.text)
+    jsResp = json.loads(result.text)
 
     for row in jsResp["results"][0]["data"]:
         rows.append(row['row'][0])
@@ -73,7 +73,7 @@ def cypher_call(query):
     headers = {'Content-Type': 'application/json'}
     data = {'statements': [{'statement': query, 'includeStats': False}]}
 
-    rq_res = rqs.post(url=preset_configs.NEO4J_TRANSACTIONS_URL, headers=headers, data=ujson.dumps(data),
+    rq_res = rqs.post(url=preset_configs.NEO4J_TRANSACTIONS_URL, headers=headers, data=json.dumps(data),
                   auth=(preset_configs.NEO4J_USER, preset_configs.NEO4J_PASSWORD))
     return rq_res
 

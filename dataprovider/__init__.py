@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, Response
-from flask_cache import Cache
-import ujson
+# from flask_cache import Cache
+from flask_caching import Cache
+import json
 import utils
 
 from BaseRequest import BaseRequest
@@ -113,6 +114,6 @@ def process_request():
     else:
         result, errorStr, response_status = metaviz_request.get_data()
 
-    res = Response(response=ujson.dumps({"id": int(req_id), "error": errorStr, "result": result}),
+    res = Response(response=json.dumps({"id": int(req_id), "error": errorStr, "result": result}),
                    status=response_status, mimetype="application/json")
     return res
