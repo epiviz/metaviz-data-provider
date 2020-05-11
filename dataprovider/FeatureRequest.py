@@ -86,7 +86,7 @@ class FeatureRequest(BaseRequest):
                 #                "[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->" \
                 #                "()<-[v:COUNT]-(s:Sample) WHERE s.id IN " + tick_samples + " RETURN DISTINCT s"
                 sampleQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
-                               "(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE s.id IN %s RETURN DISTINCT s" \
+                               "(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) USING INDEX s:Sample(id) WHERE s.id IN %s RETURN DISTINCT s" \
                                % (self.params.get(self.datasource_param), tick_samples)
 
                 sample_rq_res = utils.cypher_call(sampleQryStr)
