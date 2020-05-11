@@ -136,14 +136,14 @@ class HierarchyRequest(BaseRequest):
             all_nodes = "['" + all_nodes + "']"
 
             qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-" \
-                     "[:PARENT_OF*0..3]->(f2:Feature) WHERE f.id IN %s OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
+                     "[:PARENT_OF*0..%s]->(f2:Feature) WHERE f.id IN %s OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
                      "(fParent:Feature) with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
                      "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
                      "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, " \
                      "ff.partition as partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, " \
                      "ff.nchildren as nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, " \
                      "ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order" \
-                     % (self.params.get(self.datasource_param), all_nodes)
+                     % (self.params.get(self.datasource_param), self.params.get(self.depth_param), all_nodes)
 
             tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                       "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -153,8 +153,8 @@ class HierarchyRequest(BaseRequest):
             taxonomy = True
 
             nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]" \
-                                  "->(f:Feature)-[:PARENT_OF*0..3]->(f2:Feature) return f2.depth as level, " \
-                                  "count(*) as nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param))
+                                  "->(f:Feature)-[:PARENT_OF*0..%s]->(f2:Feature) return f2.depth as level, " \
+                                  "count(*) as nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param), self.params.get(self.depth_param))
             try:
                 rq_res = utils.cypher_call(qryStr)
                 df = utils.process_result(rq_res)
@@ -219,12 +219,12 @@ class HierarchyRequest(BaseRequest):
         if not otu_request:
             if len(root_node) == 0 or root_node == "0-0" or root_node == "0-1":
                 qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature {id:'%s'})-" \
-                         "[:PARENT_OF*0..3]->(f2:Feature) with collect(f2) + f as nodesFeat unwind nodesFeat " \
+                         "[:PARENT_OF*0..%s]->(f2:Feature) with collect(f2) + f as nodesFeat unwind nodesFeat " \
                          "as ff return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
                          "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as " \
                          "partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as " \
                          "nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by " \
-                         "ff.depth, ff.leafIndex, ff.order" % (self.params.get(self.datasource_param), root_node)
+                         "ff.depth, ff.leafIndex, ff.order" % (self.params.get(self.datasource_param), root_node, self.params.get(self.depth_param))
 
                 tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                           "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -234,18 +234,18 @@ class HierarchyRequest(BaseRequest):
                 taxonomy = True
 
                 nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature {id:'%s'})-" \
-                                  "[:PARENT_OF*0..3]->(f2:Feature) return f2.depth as level, count(*) as " \
-                                  "nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param), root_node)
+                                  "[:PARENT_OF*0..%s]->(f2:Feature) return f2.depth as level, count(*) as " \
+                                  "nodesPerLevel ORDER BY level" % (self.params.get(self.datasource_param), root_node, self.params.get(self.depth_param))
 
             else:
                 qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
-                         "(f:Feature {id:'%s'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
+                         "(f:Feature {id:'%s'})-[:PARENT_OF*0..%s]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
                          "(fParent:Feature) with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff " \
                          "return distinct ff.lineage as lineage, ff.start as start, ff.label as label, " \
                          "ff.leafIndex as leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as " \
                          "partition, ff.end as end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as " \
                          "nchildren, ff.taxonomy as taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by " \
-                         "ff.depth, ff.leafIndex, ff.order" % (self.params.get(self.datasource_param), root_node)
+                         "ff.depth, ff.leafIndex, ff.order" % (self.params.get(self.datasource_param), self.params.get(self.depth_param), root_node)
 
                 tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                           "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -255,9 +255,9 @@ class HierarchyRequest(BaseRequest):
                 taxonomy = True
 
                 nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-" \
-                                      "[:PARENT_OF*]->(f:Feature {id:'%s'})-[:PARENT_OF*0..3]->(f2:Feature) " \
+                                      "[:PARENT_OF*]->(f:Feature {id:'%s'})-[:PARENT_OF*0..%s]->(f2:Feature) " \
                                       "return f2.depth as level, count(*) as nodesPerLevel ORDER BY level" \
-                                      % (self.params.get(self.datasource_param), root_node)
+                                      % (self.params.get(self.datasource_param), root_node, self.params.get(self.depth_param))
             try:
                 rq_res = utils.cypher_call(qryStr)
                 df = utils.process_result(rq_res)
@@ -337,13 +337,13 @@ class HierarchyRequest(BaseRequest):
             otu_parent_id = root_split[1] + "-" + root_split[2]
 
             qryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->" \
-                     "(f:Feature {id:'%s'})-[:PARENT_OF*0..3]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
+                     "(f:Feature {id:'%s'})-[:PARENT_OF*0..%s]->(f2:Feature) OPTIONAL MATCH (f)<-[:PARENT_OF]-" \
                      "(fParent:Feature) with collect(f2) + f + fParent as nodesFeat unwind nodesFeat as ff return " \
                      "distinct ff.lineage as lineage, ff.start as start, ff.label as label, ff.leafIndex as " \
                      "leafIndex, ff.parentId as parentId, ff.depth as depth, ff.partition as partition, ff.end as " \
                      "end, ff.id as id, ff.lineageLabel as lineageLabel, ff.nchildren as nchildren, ff.taxonomy as " \
                      "taxonomy, ff.nleaves as nleaves, ff.order as order ORDER by ff.depth, ff.leafIndex, ff.order" \
-                     % (self.params.get(self.datasource_param), otu_parent_id)
+                     % (self.params.get(self.datasource_param), otu_parent_id, self.params.get(self.depth_param))
 
             tQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(f:Feature) RETURN DISTINCT " \
                       "f.taxonomy as taxonomy, f.depth as depth ORDER BY f.depth UNION MATCH (ds:Datasource " \
@@ -353,9 +353,9 @@ class HierarchyRequest(BaseRequest):
             taxonomy = True
 
             nodesPerLevelQryStr = "MATCH (ds:Datasource {label: '%s'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]" \
-                                  "->(f:Feature {id:'%s'})-[:PARENT_OF*0..3]->(f2:Feature) return f2.depth as level, " \
+                                  "->(f:Feature {id:'%s'})-[:PARENT_OF*0..%s]->(f2:Feature) return f2.depth as level, " \
                                   "count(*) as nodesPerLevel ORDER BY level" \
-                                  % (self.params.get(self.datasource_param),otu_parent_id)
+                                  % (self.params.get(self.datasource_param), otu_parent_id, self.params.get(self.depth_param))
             try:
                 rq_res = utils.cypher_call(qryStr)
                 df = utils.process_result(rq_res)
